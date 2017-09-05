@@ -1,0 +1,46 @@
+
+Discarded input sections
+
+ .bss           0x00000000        0x0 build/mailbox.o
+ .ARM.attributes
+                0x00000000       0x14 build/mailbox.o
+ .bss           0x00000000        0x0 build/framebuffer.o
+ .ARM.attributes
+                0x00000000       0x14 build/framebuffer.o
+ .bss           0x00000000        0x0 build/main.o
+ .ARM.attributes
+                0x00000000       0x14 build/main.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+LOAD build/mailbox.o
+LOAD build/framebuffer.o
+LOAD build/main.o
+
+.init
+ *(.init)
+
+.text           0x00000000       0xfc
+ *(.text)
+ .text          0x00000000       0x78 build/mailbox.o
+                0x00000000                MailboxWrite
+                0x00000034                MailboxRead
+ .text          0x00000078       0x44 build/framebuffer.o
+                0x00000078                FramebufferSetup
+ .text          0x000000bc       0x40 build/main.o
+                0x000000bc                _start
+
+.data           0x00000100       0x28
+ *(.data)
+ .data          0x00000100        0x0 build/mailbox.o
+ .data          0x00000100       0x28 build/framebuffer.o
+ .data          0x00000128        0x0 build/main.o
+
+/DISCARD/
+ *(*)
+OUTPUT(build/output.elf elf32-littlearm)

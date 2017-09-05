@@ -1,0 +1,88 @@
+
+build/output.elf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+00000000 <MailboxWrite>:
+   0:	e92d001e 	push	{r1, r2, r3, r4}
+   4:	e59f2068 	ldr	r2, [pc, #104]	; 74 <DoneReading+0x8>
+   8:	e0244004 	eor	r4, r4, r4
+
+0000000c <WaitingToWrite>:
+   c:	e2844001 	add	r4, r4, #1
+  10:	e3140702 	tst	r4, #524288	; 0x80000
+  14:	1a000004 	bne	2c <DoneWriting>
+  18:	e5923018 	ldr	r3, [r2, #24]
+  1c:	e3130102 	tst	r3, #-2147483648	; 0x80000000
+  20:	1afffff9 	bne	c <WaitingToWrite>
+  24:	e1801001 	orr	r1, r0, r1
+  28:	e5821020 	str	r1, [r2, #32]
+
+0000002c <DoneWriting>:
+  2c:	e8bd001e 	pop	{r1, r2, r3, r4}
+  30:	e1a0f00e 	mov	pc, lr
+
+00000034 <MailboxRead>:
+  34:	e92d001c 	push	{r2, r3, r4}
+  38:	e59f2034 	ldr	r2, [pc, #52]	; 74 <DoneReading+0x8>
+  3c:	e0244004 	eor	r4, r4, r4
+
+00000040 <WaitingToRead>:
+  40:	e2844001 	add	r4, r4, #1
+  44:	e3140702 	tst	r4, #524288	; 0x80000
+  48:	1a000007 	bne	6c <DoneReading>
+  4c:	e5923018 	ldr	r3, [r2, #24]
+  50:	e3130101 	tst	r3, #1073741824	; 0x40000000
+  54:	1afffff9 	bne	40 <WaitingToRead>
+  58:	e5923000 	ldr	r3, [r2]
+  5c:	e203100f 	and	r1, r3, #15
+  60:	e1300001 	teq	r0, r1
+  64:	1afffff5 	bne	40 <WaitingToRead>
+  68:	e3c3100f 	bic	r1, r3, #15
+
+0000006c <DoneReading>:
+  6c:	e8bd001c 	pop	{r2, r3, r4}
+  70:	e1a0f00e 	mov	pc, lr
+  74:	2000b880 	.word	0x2000b880
+
+00000078 <FramebufferSetup>:
+  78:	e92d4000 	stmfd	sp!, {lr}
+  7c:	e3a00001 	mov	r0, #1
+  80:	e59f102c 	ldr	r1, [pc, #44]	; b4 <FramebufferSetup+0x3c>
+  84:	e2811101 	add	r1, r1, #1073741824	; 0x40000000
+  88:	e3a02d1e 	mov	r2, #1920	; 0x780
+  8c:	e5812000 	str	r2, [r1]
+  90:	e5812008 	str	r2, [r1, #8]
+  94:	e59f201c 	ldr	r2, [pc, #28]	; b8 <FramebufferSetup+0x40>
+  98:	e5812004 	str	r2, [r1, #4]
+  9c:	e581200c 	str	r2, [r1, #12]
+  a0:	e3a02020 	mov	r2, #32
+  a4:	e5812014 	str	r2, [r1, #20]
+  a8:	ebffffd4 	bl	0 <MailboxWrite>
+  ac:	ebffffe0 	bl	34 <MailboxRead>
+  b0:	e8bd8000 	ldmfd	sp!, {pc}
+  b4:	00000100 	.word	0x00000100
+  b8:	00000438 	.word	0x00000438
+
+000000bc <_start>:
+  bc:	e3a0d902 	mov	sp, #32768	; 0x8000
+  c0:	ebffffec 	bl	78 <FramebufferSetup>
+  c4:	e1a04001 	mov	r4, r1
+  c8:	e5943020 	ldr	r3, [r4, #32]
+
+000000cc <render$>:
+  cc:	e59f0024 	ldr	r0, [pc, #36]	; f8 <drawPixel$+0x20>
+  d0:	e3a01000 	mov	r1, #0
+  d4:	e3a02000 	mov	r2, #0
+
+000000d8 <drawPixel$>:
+  d8:	e5830000 	str	r0, [r3]
+  dc:	e2833004 	add	r3, r3, #4
+  e0:	e2811001 	add	r1, r1, #1
+  e4:	e3510d1e 	cmp	r1, #1920	; 0x780
+  e8:	1afffffa 	bne	d8 <drawPixel$>
+  ec:	e2822001 	add	r2, r2, #1
+  f0:	1afffff8 	bne	d8 <drawPixel$>
+  f4:	eafffff4 	b	cc <render$>
+  f8:	00ffc0cb 	.word	0x00ffc0cb

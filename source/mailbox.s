@@ -8,6 +8,7 @@
 .equ CONFIG,	0x2000B89C
 .equ WRITE,		0x2000B8A0
 
+	.text
 	.global MailboxWrite
 /* Writes data to the mailbox (send)
 	R0 = Channel	(Input)
@@ -65,7 +66,7 @@ WaitingToRead:
 	BNE		WaitingToRead
 
 	/* Extract data */
-	BIC		R1, R3, 0xF		// R1 = R3 AND NOT 0xF
+	BIC		R1, R3, #0xF	// R1 = R3 AND NOT 0xF
 
 DoneReading:
 	LDMFD	SP!, {R2 - R4}

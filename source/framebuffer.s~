@@ -1,0 +1,13 @@
+	.data
+	.align 4
+FrameBuffer:
+	.int 640    @ +0x00: Physical width
+	.int 480    @ +0x04: Physical height
+	.int 640    @ +0x08: Virtual width
+	.int 480    @ +0x0C: Virtual height
+	.int 0      @ +0x10: Pitch
+	.int 32     @ +0x14: Bit depth
+	.int 0      @ +0x18: X
+	.int 0      @ +0x1C: Y
+	.int 0      @ +0x20: Address
+	.int 0      @ +0x24: Size
