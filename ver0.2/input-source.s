@@ -36,7 +36,7 @@ main:
 	bl	XOpenDisplay
 	str	r0, [fp, #-20]
 	ldr	r3, [fp, #-20]
-	cmp	r3, #0		// if (display == NULL);
+	cmp	r3, #0		// if (display == NULL)
 	bne	.L2
 	ldr	r3, .L10+4
 	ldr	r3, [r3]

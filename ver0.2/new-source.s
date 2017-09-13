@@ -9,11 +9,7 @@
 	.eabi_attribute 30, 6
 	.eabi_attribute 34, 1
 	.eabi_attribute 18, 4
-	.file	"test.c"
-	.section	.rodata
-	.align	2
-.LC0:
-	.ascii	"Hello, World!\000"
+	.file	"new.c"
 	.text
 	.align	2
 	.global	main
@@ -24,22 +20,24 @@
 main:
 	@ args = 0, pretend = 0, frame = 8
 	@ frame_needed = 1, uses_anonymous_args = 0
-	@ link register save eliminated.
-	str	fp, [sp, #-4]!
-	add	fp, sp, #0
-	sub	sp, sp, #12
-	ldr	r3, .L3
-	str	r3, [fp, #-8]
+	push	{fp, lr}
+	add	fp, sp, #4
+	sub	sp, sp, #8
+	mov	r0, #0
+	bl	XOpenDisplay
+	str	r0, [fp, #-8]
+	ldr	r3, [fp, #-8]
+	cmp	r3, #0
+	bne	.L2
+	mov	r3, #1
+	b	.L3
+.L2:
 	mov	r3, #0
-	mov	r0, r3
-	add	sp, fp, #0
-	@ sp needed
-	ldr	fp, [sp], #4
-	bx	lr
-.L4:
-	.align	2
 .L3:
-	.word	.LC0
+	mov	r0, r3
+	sub	sp, fp, #4
+	@ sp needed
+	pop	{fp, pc}
 	.size	main, .-main
 	.ident	"GCC: (Raspbian 6.3.0-18+rpi1) 6.3.0 20170516"
 	.section	.note.GNU-stack,"",%progbits
