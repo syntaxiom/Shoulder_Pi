@@ -1,0 +1,60 @@
+
+notmain.elf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+00008000 <_start>:
+    8000:	e3a0d902 	mov	sp, #32768	; 0x8000
+    8004:	eb000005 	bl	8020 <notmain>
+
+00008008 <hang>:
+    8008:	eafffffe 	b	8008 <hang>
+
+0000800c <PUT32>:
+    800c:	e5801000 	str	r1, [r0]
+    8010:	e12fff1e 	bx	lr
+
+00008014 <GET32>:
+    8014:	e5900000 	ldr	r0, [r0]
+    8018:	e12fff1e 	bx	lr
+
+0000801c <dummy>:
+    801c:	e12fff1e 	bx	lr
+
+00008020 <notmain>:
+    8020:	eafffffe 	b	8020 <notmain>
+
+Disassembly of section .ARM.attributes:
+
+00000000 <.ARM.attributes>:
+   0:	00002a41 	andeq	r2, r0, r1, asr #20
+   4:	61656100 	cmnvs	r5, r0, lsl #2
+   8:	01006962 	tsteq	r0, r2, ror #18
+   c:	00000020 	andeq	r0, r0, r0, lsr #32
+  10:	4d524105 	ldfmie	f4, [r2, #-20]	; 0xffffffec
+  14:	54347620 	ldrtpl	r7, [r4], #-1568	; 0xfffff9e0
+  18:	08020600 	stmdaeq	r2, {r9, sl}
+  1c:	12010901 	andne	r0, r1, #16384	; 0x4000
+  20:	15011404 	strne	r1, [r1, #-1028]	; 0xfffffbfc
+  24:	18031701 	stmdane	r3, {r0, r8, r9, sl, ip}
+  28:	Address 0x00000028 is out of bounds.
+
+
+Disassembly of section .comment:
+
+00000000 <.comment>:
+   0:	3a434347 	bcc	10d0d24 <notmain+0x10c8d04>
+   4:	35312820 	ldrcc	r2, [r1, #-2080]!	; 0xfffff7e0
+   8:	392e343a 	stmdbcc	lr!, {r1, r3, r4, r5, sl, ip, sp}
+   c:	732b332e 			; <UNDEFINED> instruction: 0x732b332e
+  10:	33326e76 	teqcc	r2, #1888	; 0x760
+  14:	37373131 			; <UNDEFINED> instruction: 0x37373131
+  18:	2029312d 	eorcs	r3, r9, sp, lsr #2
+  1c:	2e392e34 	mrccs	14, 1, r2, cr9, cr4, {1}
+  20:	30322033 	eorscc	r2, r2, r3, lsr r0
+  24:	35303531 	ldrcc	r3, [r0, #-1329]!	; 0xfffffacf
+  28:	28203932 	stmdacs	r0!, {r1, r4, r5, r8, fp, ip, sp}
+  2c:	72657270 	rsbvc	r7, r5, #112, 4
+  30:	61656c65 	cmnvs	r5, r5, ror #24
+  34:	00296573 	eoreq	r6, r9, r3, ror r5
