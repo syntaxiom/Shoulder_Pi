@@ -35,16 +35,20 @@ int main(void)
  
     /* map (show) the window */
     XMapWindow(display, window);
- 
+	int fall = 0;
+	unsigned long fcount = 0;
     /* event loop */
     for (;;)
     {
         XNextEvent(display, &event);
+		if (! (fcount++ %10000) ) fall++;
+		 XFillRectangle(display, window, DefaultGC(display, s), 20, 0+fall, 100, 100);
  
         /* draw or redraw the window */
         if (event.type == Expose)
         {
-            XFillRectangle(display, window, DefaultGC(display, s), 20, 20, 10, 10);
+		  
+		  XFillRectangle(display, window, DefaultGC(display, s), 20, 0+fall, 100, 100);
             XDrawString(display, window, DefaultGC(display, s), 50, 50, msg, strlen(msg));
         }
         /* exit on key press */

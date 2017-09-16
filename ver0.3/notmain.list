@@ -23,7 +23,8 @@ Disassembly of section .text:
     801c:	e12fff1e 	bx	lr
 
 00008020 <notmain>:
-    8020:	eafffffe 	b	8020 <notmain>
+    8020:	e3a00000 	mov	r0, #0
+    8024:	e12fff1e 	bx	lr
 
 Disassembly of section .ARM.attributes:
 
