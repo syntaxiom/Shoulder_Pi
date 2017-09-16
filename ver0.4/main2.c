@@ -53,32 +53,32 @@ int main(int argc, char* argv[])
 
     // Open the file for reading and writing
     fbfd = open("/dev/fb0", O_RDWR);
-    if (!fbfd) {
-      printf("Error: cannot open framebuffer device.\n");
-      return(1);
-    }
-    printf("The framebuffer device was opened successfully.\n");
-
-    // Get variable screen information
-    if (ioctl(fbfd, FBIOGET_VSCREENINFO, &vinfo)) {
-      printf("Error reading variable information.\n");
-    }
-    printf("Original %dx%d, %dbpp\n", vinfo.xres, vinfo.yres, 
-       vinfo.bits_per_pixel );
+//    if (!fbfd) {
+//      printf("Error: cannot open framebuffer device.\n");
+//      return(1);
+//    }
+//    printf("The framebuffer device was opened successfully.\n");
+//
+//    // Get variable screen information
+//    if (ioctl(fbfd, FBIOGET_VSCREENINFO, &vinfo)) {
+//      printf("Error reading variable information.\n");
+//    }
+//    printf("Original %dx%d, %dbpp\n", vinfo.xres, vinfo.yres, 
+//       vinfo.bits_per_pixel );
 
     // Store for reset (copy vinfo to vinfo_orig)
     memcpy(&orig_vinfo, &vinfo, sizeof(struct fb_var_screeninfo));
 
     // Change variable info
     vinfo.bits_per_pixel = 8;
-    if (ioctl(fbfd, FBIOPUT_VSCREENINFO, &vinfo)) {
-      printf("Error setting variable information.\n");
-    }
+//    if (ioctl(fbfd, FBIOPUT_VSCREENINFO, &vinfo)) {
+//      printf("Error setting variable information.\n");
+//    }
 
     // Get fixed screen information
-    if (ioctl(fbfd, FBIOGET_FSCREENINFO, &finfo)) {
-      printf("Error reading fixed information.\n");
-    }
+//    if (ioctl(fbfd, FBIOGET_FSCREENINFO, &finfo)) {
+//      printf("Error reading fixed information.\n");
+//    }
 
     // map fb to user mem 
     screensize = vinfo.xres * vinfo.yres;
@@ -89,20 +89,17 @@ int main(int argc, char* argv[])
               fbfd, 
               0);
 
-    if ((int)fbp == -1) {
-        printf("Failed to mmap.\n");
-    }
-    else {
-        // draw...
+//    if ((int)fbp == -1) {
+//        printf("Failed to mmap.\n");
+//    }
         draw();
         sleep(5);
-    }
 
     // cleanup
     munmap(fbp, screensize);
-    if (ioctl(fbfd, FBIOPUT_VSCREENINFO, &orig_vinfo)) {
-        printf("Error re-setting variable information.\n");
-    }
+//    if (ioctl(fbfd, FBIOPUT_VSCREENINFO, &orig_vinfo)) {
+//        printf("Error re-setting variable information.\n");
+//    }
     close(fbfd);
 
     return 0;
