@@ -10,6 +10,7 @@
 	.eabi_attribute 34, 1
 	.eabi_attribute 18, 4
 	.file	"main3.c"
+
 	.global	fbp
 	.bss
 	.align	2
@@ -19,9 +20,9 @@ fbp:
 	.space	4
 	.comm	vinfo,160,4
 	.comm	finfo,68,4
+
 	.text
 	.align	2
-
 	.global	put_pixel
 	.syntax unified
 	.arm
@@ -43,15 +44,15 @@ put_pixel:
 	mul	r2, r2, r3	// r2 = y * finfo.line_length
 	ldr	r3, [fp, #-16]	// r3 = x
 	add	r3, r2, r3	// r3 = x + (r2 = y * finfo.line_length)
-	str	r3, [fp, #-8]
+	str	r3, [fp, #-8]	// fp[-8] = pix_offset
 	ldr	r3, .L2+4	// r3 = fbp
-	ldr	r2, [r3]
-	ldr	r3, [fp, #-8]
-	add	r3, r2, r3
-	ldr	r2, [fp, #-24]
-	uxtb	r2, r2
-	strb	r2, [r3]
-	nop
+	ldr	r2, [r3]	// r2 = r3
+	ldr	r3, [fp, #-8]	// r3 = pix_offset
+	add	r3, r2, r3	// fbp + pix_offset
+	ldr	r2, [fp, #-24]	// Load r2 into c
+	uxtb	r2, r2		// Extend r2 to 32-bit
+	strb	r2, [r3]	// c = fbp[pix_offset]
+	nop			// Padding
 	add	sp, fp, #0
 	@ sp needed
 	ldr	fp, [sp], #4
@@ -63,8 +64,8 @@ put_pixel:
 	.word	fbp
 	.size	put_pixel, .-put_pixel
 	.global	__aeabi_uidiv
-	.align	2
 
+	.align	2
 	.global	draw
 	.syntax unified
 	.arm
@@ -129,9 +130,9 @@ draw:
 	.align	2
 .LC0:
 	.ascii	"/dev/fb0\000"
+
 	.text
 	.align	2
-
 	.global	main
 	.syntax unified
 	.arm
@@ -151,18 +152,18 @@ main:
 	str	r3, [fp, #-12]
 	mov	r1, #2
 	ldr	r0, .L13
-	bl	open
+	bl	open		// syscall 5
 	str	r0, [fp, #-8]
 	ldr	r2, .L13+4
 	mov	r1, #17920
 	ldr	r0, [fp, #-8]
-	bl	ioctl
+	bl	ioctl		// syscall 54
 	ldr	r2, .L13+4
 	sub	r3, fp, #172
 	mov	r1, r2
 	mov	r2, #160
 	mov	r0, r3
-	bl	memcpy
+	bl	memcpy		// syscall ???
 	ldr	r3, .L13+4
 	mov	r2, #8
 	str	r2, [r3, #24]
@@ -188,7 +189,7 @@ main:
 	mov	r3, #1
 	mov	r2, #3
 	mov	r0, #0
-	bl	mmap
+	bl	mmap		// syscall 90
 	mov	r2, r0
 	ldr	r3, .L13+20
 	str	r2, [r3]
@@ -200,7 +201,7 @@ main:
 	ldr	r2, [fp, #-12]
 	mov	r1, r2
 	mov	r0, r3
-	bl	munmap
+	bl	munmap		// syscall 91
 	sub	r3, fp, #172
 	mov	r2, r3
 	ldr	r1, .L13+8

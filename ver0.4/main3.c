@@ -17,7 +17,7 @@ void put_pixel(int x, int y, int c)
     // calculate the pixel's byte offset inside the buffer
     unsigned int pix_offset = x + y * finfo.line_length;
 
-    // now this is about the same as 'fbp[pix_offset] = value'
+    // now this is about the same as '*((char*)(fbp + pix_offset)) = c'
     fbp[pix_offset] = c;
 
 }
@@ -49,7 +49,6 @@ int main(int argc, char* argv[])
     int fbfd = 0;
     struct fb_var_screeninfo orig_vinfo;
     long int screensize = 0;
-
 
     // Open the file for reading and writing
     fbfd = open("/dev/fb0", O_RDWR);
