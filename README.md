@@ -5,6 +5,8 @@ This is a general purpose game engine that runs on the Raspberry Pi 3 using ARM 
 You need to be in console mode (shortcut Ctrl+Alt+F1) to run the code.
 To get back to GUI mode, press Ctrl+Alt+F7.
 
+See parts 5, 6, and 7 of the compote.blogspot link. It's important for accessing RGB values.
+
 ## Helpful resources
 http://raspberrycompote.blogspot.com/2012/12/low-level-graphics-on-raspberry-pi-part_9509.html
 
