@@ -22,27 +22,6 @@ void put_pixel(int x, int y, int c)
 
 }
 
-// helper function for drawing - no more need to go mess with
-// the main function when just want to change what to draw...
-void draw() {
-
-    int x, y;
-
-    for (y = 0; y < vinfo.yres; y++) {
-        for (x = 0; x < vinfo.xres; x++) {
-
-            // color based on the 16th of the screen width
-            int c = 16 * x / vinfo.xres;
-
-            // call the helper function
-            put_pixel(x, y, c);
-	    printf("%d\n", c);
-
-        }
-    }
-
-}
-
 // application entry point
 int main(int argc, char* argv[])
 {
@@ -76,7 +55,11 @@ int main(int argc, char* argv[])
               fbfd, 
               0);
 
-    draw();
+    for (int i = 0; i < vinfo.xres; i++)
+    {
+    	put_pixel(i, vinfo.yres, 13);
+    }
+
     sleep(5);
 
     // cleanup

@@ -195,7 +195,7 @@ main:
 	str	r2, [r3]
 	bl	draw
 	mov	r0, #5
-	bl	sleep
+	bl	sleep		// syscall 162?
 	ldr	r3, .L13+20
 	ldr	r3, [r3]
 	ldr	r2, [fp, #-12]
@@ -208,7 +208,7 @@ main:
 	ldr	r0, [fp, #-8]
 	bl	ioctl
 	ldr	r0, [fp, #-8]
-	bl	close
+	bl	close		// syscall 6
 	mov	r3, #0
 	mov	r0, r3
 	sub	sp, fp, #4
