@@ -56,11 +56,7 @@ int main(int argc, char* argv[])
               fbfd, 
               0);
 
-    for (int i = 0; i < vinfo.xres; i++)
-    {
-    	put_pixel(i, vinfo.yres / 2, 5);
-    }
-
+    put_pixel(vinfo.xres / 2, vinfo.yres / 2, 5);
     sleep(5);
 
     // cleanup

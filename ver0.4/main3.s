@@ -98,7 +98,7 @@ draw:
 	ldr	r2, [fp, #-16]
 	ldr	r1, [fp, #-12]
 	ldr	r0, [fp, #-8]
-	bl	put_pixel
+	bl	put_pixel	// Parameters for `put_pixel` are r2, r1, and r0
 	ldr	r3, [fp, #-8]
 	add	r3, r3, #1
 	str	r3, [fp, #-8]
