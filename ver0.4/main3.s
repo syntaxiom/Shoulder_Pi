@@ -169,11 +169,11 @@ main:
 	str	r2, [r3, #24]
 	ldr	r2, .L13+4	// r2 = .L13+4 = vinfo
 	ldr	r1, .L13+8	// r1 = .L13+8 = 17921
-	ldr	r0, [fp, #-8]	// r0 = (fp - 8) = open("dev/fb0")?
+	ldr	r0, [fp, #-8]	// r0 = (fp - 8) = open("/dev/fb0")?
 	bl	ioctl		// syscall 54
 	ldr	r2, .L13+12	// r2 = .L13+12 = finfo
 	ldr	r1, .L13+16	// r1 = .L13+16 = 17922
-	ldr	r0, [fp, #-8]	// r0 = (fp - 8) = open("dev/fb0")?
+	ldr	r0, [fp, #-8]	// r0 = (fp - 8) = open("/dev/fb0")?
 	bl	ioctl		// syscall 54
 	ldr	r3, .L13+4	// r3 = .L13+4 = vinfo
 	ldr	r3, [r3]	// r3 = vinfo.xres
@@ -202,12 +202,12 @@ main:
 	mov	r1, r2		// Could just `ldr r1, [fp, #-12]` and delete above line
 	mov	r0, r3		// Could just `ldr r0, .L13+20` and delete lines 3 and 4 above
 	bl	munmap		// syscall 91
-	sub	r3, fp, #172
-	mov	r2, r3
+	sub	r3, fp, #172	// r3 = fp - #172
+	mov	r2, r3		// r2 = r3 (Redundant?)
 	ldr	r1, .L13+8	// r1 = .L13+8 = 17921
-	ldr	r0, [fp, #-8]
-	bl	ioctl
-	ldr	r0, [fp, #-8]
+	ldr	r0, [fp, #-8]	// r0 = (fp - 8) = open("/dev/fb0")?
+	bl	ioctl		// syscall 54
+	ldr	r0, [fp, #-8]	// Redundant?
 	bl	close		// syscall 6
 	mov	r3, #0
 	mov	r0, r3		// Could just `mov r0, #0` and delete above line
