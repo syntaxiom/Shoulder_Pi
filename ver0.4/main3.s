@@ -156,12 +156,12 @@ main:
 	str	r0, [fp, #-8]	// (fp - 8) = r0 = open("/dev/fb0")?
 	ldr	r2, .L13+4	// r3 = .L13+4 = vinfo
 	mov	r1, #17920
-	ldr	r0, [fp, #-8]	// r0 = (fp - 8) = open("/dev/fb0")? (Redundant?)
+	ldr	r0, [fp, #-8]	// r0 = (fp - 8) = open("/dev/fb0")?
 	bl	ioctl		// syscall 54
 	ldr	r2, .L13+4	// r2 = .L13+4 = vinfo
 	sub	r3, fp, #172
 	mov	r1, r2
-	mov	r2, #160
+	mov	r2, #160	// sizeof(struct fb_var_screeninfo)) = 160 bytes
 	mov	r0, r3
 	bl	memcpy		// syscall ??? (Maybe come up with a manual `memcpy`)
 	ldr	r3, .L13+4	// r3 = .L13+4 = vinfo
@@ -169,38 +169,38 @@ main:
 	str	r2, [r3, #24]
 	ldr	r2, .L13+4	// r2 = .L13+4 = vinfo
 	ldr	r1, .L13+8	// r1 = .L13+8 = 17921
-	ldr	r0, [fp, #-8]
+	ldr	r0, [fp, #-8]	// r0 = (fp - 8) = open("dev/fb0")?
 	bl	ioctl		// syscall 54
 	ldr	r2, .L13+12	// r2 = .L13+12 = finfo
 	ldr	r1, .L13+16	// r1 = .L13+16 = 17922
-	ldr	r0, [fp, #-8]
+	ldr	r0, [fp, #-8]	// r0 = (fp - 8) = open("dev/fb0")?
 	bl	ioctl		// syscall 54
 	ldr	r3, .L13+4	// r3 = .L13+4 = vinfo
-	ldr	r3, [r3]	// Redundant?
+	ldr	r3, [r3]	// r3 = vinfo.xres
 	ldr	r2, .L13+4	// r2 = .L13+4 = vinfo
-	ldr	r2, [r2, #4]
-	mul	r3, r2, r3
-	str	r3, [fp, #-12]
-	ldr	r1, [fp, #-12]
+	ldr	r2, [r2, #4]	// r2 = vinfo.yres
+	mul	r3, r2, r3	// r3 = r2 * r3 = vinfo.xres * vinfo.yres = `screensize`
+	str	r3, [fp, #-12]	// (fp - 12) = r3 = `screensize`
+	ldr	r1, [fp, #-12]	// r1 = (fp - 12) = `screensize`
 	mov	r3, #0
-	str	r3, [sp, #4]
-	ldr	r3, [fp, #-8]
-	str	r3, [sp]
-	mov	r3, #1
-	mov	r2, #3
-	mov	r0, #0
-	bl	mmap		// syscall 90 (So few parameters?)
-	mov	r2, r0
+	str	r3, [sp, #4]	// (sp + 4) = r3 = 0
+	ldr	r3, [fp, #-8]	// r3 = (fp - 8) = open("dev/fb0")?
+	str	r3, [sp]	// sp = r3 = open("dev/fb0")?
+	mov	r3, #1		// Opcode for MAP_SHARED = 1
+	mov	r2, #3		// Opcode for READ and WRITE (PROT_READ | PROT_WRITE) = 3
+	mov	r0, #0		// 1st parameter for mmap in the C code is `0`
+	bl	mmap		// syscall 90 (First 4 paramaters = r0 -- r3; Last 2 parameters = sp -- sp+4)
+	mov	r2, r0		// Could just `mov r2, #0`, unless there's an advantage to doing this instead
 	ldr	r3, .L13+20	// r3 = .L13+20 = fbp
-	str	r2, [r3]	// Redundant?
+	str	r2, [r3]
 	bl	draw
 	mov	r0, #5
 	bl	sleep		// syscall 162?
 	ldr	r3, .L13+20	// r3 = .L13+20 = fbp
 	ldr	r3, [r3]	// Redundant?
-	ldr	r2, [fp, #-12]
-	mov	r1, r2
-	mov	r0, r3
+	ldr	r2, [fp, #-12]	// r2 = (fp - 12) = `screensize`
+	mov	r1, r2		// Could just `ldr r1, [fp, #-12]` and delete above line
+	mov	r0, r3		// Could just `ldr r0, .L13+20` and delete lines 3 and 4 above
 	bl	munmap		// syscall 91
 	sub	r3, fp, #172
 	mov	r2, r3
