@@ -18,8 +18,8 @@
 	.size	fbp, 4
 fbp:
 	.space	4
-	.comm	vinfo,160,4
-	.comm	finfo,68,4
+	.comm	vinfo,160,4	// vinfo = `struct fb_var_screeninfo` = 160 bytes, 4 byte separation?
+	.comm	finfo,68,4	// finfo = `struct fb_fix_screeninfo` = 68 bytes, 4 byte separation?
 
 	.text
 	.align	2
@@ -155,7 +155,7 @@ main:
 	bl	open		// syscall 5
 	str	r0, [fp, #-8]	// (fp - 8) = r0 = open("/dev/fb0")?
 	ldr	r2, .L13+4	// r3 = .L13+4 = vinfo
-	mov	r1, #17920
+	mov	r1, #17920	// r1 = 17920 = Opcode for `FBIOGET_VSCREENINFO`
 	ldr	r0, [fp, #-8]	// r0 = (fp - 8) = open("/dev/fb0")?
 	bl	ioctl		// syscall 54
 	ldr	r2, .L13+4	// r2 = .L13+4 = vinfo
@@ -168,11 +168,11 @@ main:
 	mov	r2, #8
 	str	r2, [r3, #24]
 	ldr	r2, .L13+4	// r2 = .L13+4 = vinfo
-	ldr	r1, .L13+8	// r1 = .L13+8 = 17921
+	ldr	r1, .L13+8	// r1 = .L13+8 = 17921 = Opcode for `FBIOPUT_VSCREENINFO`
 	ldr	r0, [fp, #-8]	// r0 = (fp - 8) = open("/dev/fb0")?
 	bl	ioctl		// syscall 54
 	ldr	r2, .L13+12	// r2 = .L13+12 = finfo
-	ldr	r1, .L13+16	// r1 = .L13+16 = 17922
+	ldr	r1, .L13+16	// r1 = .L13+16 = 17922 = Opcode for `FBIOGET_FSCREENINFO`
 	ldr	r0, [fp, #-8]	// r0 = (fp - 8) = open("/dev/fb0")?
 	bl	ioctl		// syscall 54
 	ldr	r3, .L13+4	// r3 = .L13+4 = vinfo
