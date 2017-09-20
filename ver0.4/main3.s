@@ -144,19 +144,19 @@ main:
 	push	{fp, lr}
 	add	fp, sp, #4
 	sub	sp, sp, #184
-	str	r0, [fp, #-176]
-	str	r1, [fp, #-180]
+	str	r0, [fp, #-176]	// (fp - 176) = fbfd
+	str	r1, [fp, #-180]	// (fp - 180) = screensize
 	mov	r3, #0
-	str	r3, [fp, #-8]
-	mov	r3, #0
-	str	r3, [fp, #-12]
+	str	r3, [fp, #-8]	// (fp - 8) = r3 = #0
+	mov	r3, #0		// Redundant?
+	str	r3, [fp, #-12]	// (fp - 12) = r3 = #0
 	mov	r1, #2		// Opcode for reading/writing is 2
 	ldr	r0, .L13	// r0 = .L13+0 = .LC0 = "/dev/fb0"
 	bl	open		// syscall 5
-	str	r0, [fp, #-8]
+	str	r0, [fp, #-8]	// (fp - 8) = r0 = open("/dev/fb0")
 	ldr	r2, .L13+4	// r3 = .L13+4 = vinfo
 	mov	r1, #17920
-	ldr	r0, [fp, #-8]
+	ldr	r0, [fp, #-8]	// r0 = (fp - 8) = open("/dev/fb0") (Redundant?)
 	bl	ioctl		// syscall 54
 	ldr	r2, .L13+4	// r2 = .L13+4 = vinfo
 	sub	r3, fp, #172
