@@ -153,17 +153,17 @@ main:
 	mov	r1, #2		// Opcode for reading/writing is 2
 	ldr	r0, .L13	// r0 = .L13+0 = .LC0 = "/dev/fb0"
 	bl	open		// syscall 5
-	str	r0, [fp, #-8]	// (fp - 8) = r0 = open("/dev/fb0")
+	str	r0, [fp, #-8]	// (fp - 8) = r0 = open("/dev/fb0")?
 	ldr	r2, .L13+4	// r3 = .L13+4 = vinfo
 	mov	r1, #17920
-	ldr	r0, [fp, #-8]	// r0 = (fp - 8) = open("/dev/fb0") (Redundant?)
+	ldr	r0, [fp, #-8]	// r0 = (fp - 8) = open("/dev/fb0")? (Redundant?)
 	bl	ioctl		// syscall 54
 	ldr	r2, .L13+4	// r2 = .L13+4 = vinfo
 	sub	r3, fp, #172
 	mov	r1, r2
 	mov	r2, #160
 	mov	r0, r3
-	bl	memcpy		// syscall ???
+	bl	memcpy		// syscall ??? (Maybe come up with a manual `memcpy`)
 	ldr	r3, .L13+4	// r3 = .L13+4 = vinfo
 	mov	r2, #8
 	str	r2, [r3, #24]
@@ -176,7 +176,7 @@ main:
 	ldr	r0, [fp, #-8]
 	bl	ioctl		// syscall 54
 	ldr	r3, .L13+4	// r3 = .L13+4 = vinfo
-	ldr	r3, [r3]	// Not sure why this is here
+	ldr	r3, [r3]	// Redundant?
 	ldr	r2, .L13+4	// r2 = .L13+4 = vinfo
 	ldr	r2, [r2, #4]
 	mul	r3, r2, r3
@@ -189,7 +189,7 @@ main:
 	mov	r3, #1
 	mov	r2, #3
 	mov	r0, #0
-	bl	mmap		// syscall 90
+	bl	mmap		// syscall 90 (So few parameters?)
 	mov	r2, r0
 	ldr	r3, .L13+20	// r3 = .L13+20 = fbp
 	str	r2, [r3]	// Redundant?
@@ -197,7 +197,7 @@ main:
 	mov	r0, #5
 	bl	sleep		// syscall 162?
 	ldr	r3, .L13+20	// r3 = .L13+20 = fbp
-	ldr	r3, [r3]
+	ldr	r3, [r3]	// Redundant?
 	ldr	r2, [fp, #-12]
 	mov	r1, r2
 	mov	r0, r3
