@@ -18,7 +18,8 @@ void put_pixel(int x, int y, int c)
     unsigned int pix_offset = x + y * finfo.line_length;
 
     // now this is about the same as '*((char*)(fbp + pix_offset)) = c'
-    fbp[pix_offset] = c;
+    //fbp[pix_offset] = c;
+    *((char*)(fbp + pix_offset)) = c;
 
 }
 
@@ -57,7 +58,7 @@ int main(int argc, char* argv[])
 
     for (int i = 0; i < vinfo.xres; i++)
     {
-    	put_pixel(i, vinfo.yres, 13);
+    	put_pixel(i, vinfo.yres / 2, 5);
     }
 
     sleep(5);
