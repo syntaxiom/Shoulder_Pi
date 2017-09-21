@@ -12,16 +12,17 @@ char *fbp = 0;
 struct fb_var_screeninfo vinfo;
 struct fb_fix_screeninfo finfo;
 
-void put_pixel_RGB24(int x, int y, int r, int g, int b)
+void put_pixel_RGB32(int x, int y, int r, int g, int b, int a)
 {
     // calculate the pixel's byte offset inside the buffer
-    // note: x * 3 as every pixel is 3 consecutive bytes
-    unsigned int pix_offset = x * 3 + y * finfo.line_length;
+    // note: x * 4 as every pixel is 4 consecutive bytes
+    unsigned int pix_offset = x * 4 + y * finfo.line_length;
 
     // now this is about the same as 'fbp[pix_offset] = value'
-    *((char*)(fbp + pix_offset)) = b;
+    *((char*)(fbp + pix_offset + 0)) = b;
     *((char*)(fbp + pix_offset + 1)) = g;
     *((char*)(fbp + pix_offset + 2)) = r;
+    *((char*)(fbp + pix_offset + 3)) = a;
 }
 
 int main(int argc, char* argv[])
@@ -46,7 +47,7 @@ int main(int argc, char* argv[])
               MAP_SHARED, 
               fbfd, 
               0);
-    put_pixel_RGB24(0, 0, 255, 0, 0);
+    put_pixel_RGB32(0, 0, 255, 255, 0, 0);
     sleep(5);
 
     // cleanup
