@@ -1,7 +1,7 @@
 	.arch armv6
 	.eabi_attribute 28, 1
 	.eabi_attribute 20, 1
-	.eabi_attribute 21, 1
+	.eabti_attribute 21, 1
 	.eabi_attribute 23, 3
 	.eabi_attribute 24, 1
 	.eabi_attribute 25, 1
@@ -195,7 +195,7 @@ main:
 	str	r2, [r3]
 	bl	draw
 	mov	r0, #5
-	bl	sleep		// syscall 162?
+	bl	sleep		// syscall 162? (nanosleep?)
 	ldr	r3, .L13+20	// r3 = .L13+20 = fbp
 	ldr	r3, [r3]	// Redundant?
 	ldr	r2, [fp, #-12]	// r2 = (fp - 12) = `screensize`

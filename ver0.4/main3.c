@@ -36,8 +36,6 @@ void draw() {
 
             // call the helper function
             put_pixel(x, y, c);
-	    printf("%d\n", c);
-
         }
     }
 
