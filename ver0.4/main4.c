@@ -27,7 +27,6 @@ void put_pixel_RGB24(int x, int y, int r, int g, int b)
 int main(int argc, char* argv[])
 {
     int fbfd = 0;
-    struct fb_var_screeninfo orig_vinfo;
     long int screensize = 0;
 
     // Open the file for reading and writing
@@ -35,10 +34,7 @@ int main(int argc, char* argv[])
 
     // Get variable screen information
     ioctl(fbfd, FBIOGET_VSCREENINFO, &vinfo);
-
-    // Store for reset (copy vinfo to vinfo_orig)
-    memcpy(&orig_vinfo, &vinfo, sizeof(struct fb_var_screeninfo));
-
+    
     // Get fixed screen information
     ioctl(fbfd, FBIOGET_FSCREENINFO, &finfo);
 
@@ -50,12 +46,11 @@ int main(int argc, char* argv[])
               MAP_SHARED, 
               fbfd, 
               0);
-    put_pixel_RGB24(0, 0, 255, 255, 255);
+    put_pixel_RGB24(0, 0, 255, 0, 0);
     sleep(5);
 
     // cleanup
     munmap(fbp, screensize);
-    ioctl(fbfd, FBIOPUT_VSCREENINFO, &orig_vinfo);
     close(fbfd);
     return 0;
 }
