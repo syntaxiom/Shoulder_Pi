@@ -42,14 +42,14 @@ put_pixel:
 	mul	r2, r2, r3	// r2 = r2 * r3 = y * finfo.line_length
 	ldr	r3, [fp, #-16]	// r3 = [fp-16] = x
 	add	r3, r2, r3	// r3 = r2 + r3 = y * finfo.line_length + x
-	str	r3, [fp, #-8]	// [fp-8] = r3 = y * finfo.line_length + x
+	str	r3, [fp, #-8]	// [fp-8] = r3 = y * finfo.line_length + x = pix_offset
 	ldr	r3, .L2+4	// r3 = [.L2+4] = fbp
-	ldr	r2, [r3]	
-	ldr	r3, [fp, #-8]
-	add	r3, r2, r3
-	ldr	r2, [fp, #-24]
-	uxtb	r2, r2
-	strb	r2, [r3]
+	ldr	r2, [r3]	// r2 = r3 = fbp
+	ldr	r3, [fp, #-8]	// r3 = [fp-8] = pix_offset
+	add	r3, r2, r3	// r3 = r2 + r3 = fbp + pix_offset
+	ldr	r2, [fp, #-24]	// r2 = [fp-24] = c
+	uxtb	r2, r2		// Extend r2 byte to unsigned 32-bit number
+	strb	r2, [r3]	// r3 = fbp = r2 = c
 	nop
 	add	sp, fp, #0
 	@ sp needed
