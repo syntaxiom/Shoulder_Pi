@@ -1,101 +1,82 @@
-	.global _start
-_start:
-	LDR	R0, _file	// R0 = framebuffer file
-	STR	R0, [SP]	// SP = framebuffer file
-	MOV	R1, #2
-	BL	open		// syscall 5
-	LDR	R2, _latch+8	// R2 = vinfo
-	MOV	R1, #17920	// R1 = opcode for FBIOGET_VSCREENINFO
-	LDR	R0, [SP]
-	BL	ioctl		// syscall 54
-	MOV	R1, #17921	// R1 = opcode for FBIOPUT_VSCREENINFO
-	LDR	R0, [SP]
-	BL	ioctl		// syscall 54
-	LDR	R2, _latch+12	// R2 = finfo
-	MOV	R1, #17922	// R1 = opcode for FBIOGET_FSCREENINFO
-	LDR	R0, [SP]
-	BL	ioctl		// syscall 54
-	MOV	R1, #0
-	STR	R1, [SP, #4]	// SP+4 = 0
-	MOV	R3, #1		// R3 = Opcode for MAP_SHARED
-	LDR	R2, _latch+8	// R2 = vinfo
-	LDR	R2, [R2]	// R2 = vinfo.xres (not sure if redundant)
-	LDR	R1, _latch+8	// R1 = vinfo
-	LDR	R1, [R1, #4]	// R1 = vinfo.yres
-	MUL	R1, R1, R2	// R1 = vinfo.xres * vinfo.yres = screensize
-	MOV	R2, #3		// R2 = Opcode for PROT_READ | PROT_WRITE
-	MOV	R0, #0		// R0 = 0
-	BL	mmap		// syscall 90; Params: R0--R3, SP, SP+4
-	MOV	R0, #0		// R0 = x
-	MOV	R1, #0		// R1 = y
-	MOV	R2, #255	// R2 = b
-	MOV	R3, #0		// R3 = g
-	MOV	R4, #255	// R4 = r
-	BL	_put_pixel
-	MOV	R0, #5
-	BL	sleep
-	BAL	_exit
+	.text
+	.global main
+	.func main
+main:
+	PUSH	{LR}
+	LDR	R0, =file	// R0 = "/dev/fb0"
+	STR	R0, [SP]	// SP+0 = "/dev/fb0"
+	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
+	BL	open		// Parameters: R0--R1
+	LDR	R1, =opcodes	// R1 = 17920 (Opcode for FPIOGET_VSCREENINFO)
+	LDR	R2, =latch+8	// R2 = vinfo
+	BL	ioctl		// Parameters: R0--R2
+	MOV	R1, #8		// R1 = 8
+	STR	R1, [R2, #24]	// vinfo.bits_per_pixel = 8
+	LDR	R1, =opcodes+4	// R1 = 17921 (Opcode for FBIOPUT_VSCREENINFO)
+	BL	ioctl		// Parameters: R0--R2
+	LDR	R1, =opcodes+8	// R1 = 17922 (Opcode for FBIOGET_FSCREENINFO)
+	LDR	R2, =latch+12	// R2 = finfo
+	BL	ioctl		// Parameters: R0--R2
+	POP	{PC}
 
-/*
-	r0 = x
-	r1 = y
-	r2 = b
-	r3 = g
-	r4 = r
-	------
-	r5--r7
-	*/
-	.align 2
-	.global _put_pixel
-_put_pixel:
-	UXTB	R2, R2		// Extend b to unsigned 32-bit number (del?)
-	UXTB	R3, R3		// Extend g to unsigned 32-bit number (del?)
-	UXTB	R4, R4		// Extend r to unsigned 32-bit number (del?)
-	MOV	R5, #3		// 3 bytes per pixel
-	MUL	R5, R0, R5	// R5 = x * 3 bytes per pixel
-	LDR	R6, _latch	// R6 = finfo
-	LDR	R6, [R6, #44]	// R6 = finfo.line_length
-	MUL	R6, R1, R6	// R6 = y * finfo.line_length
-	ADD	R5, R5, R6	// R5 = x * 3 + y * finfo.line_length = pix_offset
-	LDR	R6, _latch+4	// R6 = framebuffer
-	MOV	R7, #0		// R7 = 0 Offset
-	ADD	R7, R5, R7	// pix_offset += 0
-	ADD	R6, R5, R6	// framebuffer += pix_offset
-	STRB	R2, [R6]	// framebuffer + 0 = r
-	MOV	R7, #1		// R7 = 1 Offset
-	ADD	R7, R5, R7	// pix_offset += 1
-	ADD	R6, R5, R6	// framebuffer += pix_offset + 1
-	STRB	R3, [R6]	// framebuffer + 1 = g
-	MOV	R7, #2		// R7 = 2 Offset
-	ADD	R7, R5, R7	// pix_offset += 2
-	ADD 	R6, R5, R6	// framebuffer += pix_offset + 2
-	STRB	R4, [R6]	// framebuffer + 2 = r
+/* Parameters:
+	R0 = x
+	R1 = y
+	R2 = g
+	R3 = b
+	R4 = r
+   Clobbers:
+	R5--R7 */
+	.global put_pixel
+	.type	put_pixel, %function
+put_pixel:
+	MOV	R5, #3		// R5 = 3
+	MUL	R0, R0, R5	// R0 = x * 3
+	LDR	R5, =latch	// R5 = finfo
+	LDR	R5, [R5, #44]	// R5 = finfo.line_length
+	MUL	R1, R1, R5	// R1 = y * finfo.line_length
+	ADD	R5, R0, R1	// R5 = x * 3 + y * finfo.line_length
+	LDR	R6, =latch+4	// R6 = framebuffer
+	ADD	R6, R6, R5	// R6 = framebuffer + pix_offset
+	MOV	R5, #0		// R5 = 0
+	MOV	R7, #0		// R7 = 0
+	ADD	R7, R6, R5	// R7 = R6 + 0
+	STRB	R2, [R7]	// R7 = g (green, byte)
+	MOV	R5, #1		// R5 = 1
+	MOV	R7, #0		// R7 = 0
+	ADD	R7, R6, R5	// R7 = R6 + 1
+	STRB	R3, [R7]	// R7 = b (blue, byte)
+	MOV	R5, #2		// R5 = 2
+	MOV	R7, #0		// R7 = 0
+	ADD	R7, R6, R5	// R7 = R6 + 2
+	STRB	R4, [R7]	// R7 = r (red, byte)
 	MOV	PC, LR
-	
-	.global _exit
-_exit:
-	MOVAL	R7, #1
-	SWI	0
-
-	.global _framebuffer
-	.bss
-	.align 2
-	.type _framebuffer, %object
-	.size _framebuffer, 4
-_framebuffer:
-	.space 4
-	.comm vinfo, 160, 4
-	.comm finfo, 68, 4
 
 	.data
-	.align 2
-	.global _latch
-_latch:
-	.word finfo
-	.word framebuffer
-	.word vinfo
-	.word finfo
+	.global file
+file:
+	.asciz	"/dev/fb0"
 
-	.global _file
-_file:
-	.ascii "/dev/feb0\000"
+	.global framebuffer
+	.align	2
+	.type	framebuffer, %object
+	.size	framebuffer, 4
+framebuffer:
+	.space	4
+	.comm	vinfo, 160, 4
+	.comm	finfo, 68, 4
+	
+	.global latch
+	.align	2
+latch:
+	.word	finfo
+	.word	framebuffer
+	.word	vinfo
+	.word	finfo
+
+	.global opcodes
+	.align	2
+opcodes:
+	.word	17920
+	.word	17921
+	.word	17922

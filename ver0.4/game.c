@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
 
     // Get fixed screen information
     ioctl(fbfd, FBIOGET_FSCREENINFO, &finfo);
-
+    
     // map fb to user mem 
     screensize = vinfo.xres * vinfo.yres;
     fbp = (char*)mmap(0, 
