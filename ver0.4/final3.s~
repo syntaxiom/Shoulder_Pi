@@ -1,0 +1,9 @@
+	.text
+	.global main
+main:
+	PUSH	{LR}
+
+	.data
+	.global file
+file:
+	.asciz "/dev/fb0"

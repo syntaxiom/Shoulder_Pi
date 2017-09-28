@@ -1,3 +1,5 @@
+// KEEP FRAMEBUFFER IN BSS
+	
 	.text
 	.global main
 	.func main
@@ -15,7 +17,7 @@ main:
 	SVC	#0
 	LDR	R0, [SP]	// R0 = "/dev/fb0"
 	LDR	R1, opcodes+8	// R1 = 17922 (Opcode for FBIOGET_FSCREENINFO)
-	LDR	R2, =latch	// R2 = finfo
+	LDR	R2, latch	// R2 = finfo
 	MOVAL	R7, #54		// ioctl (R0--R2)
 	SVC	#0
 	MOV	R0, #0		// R0 = 0
@@ -94,7 +96,6 @@ opcodes:
 	.word	17920
 	.word	17921
 	.word	17922
-
 
 	.data
 	.global file
