@@ -19,6 +19,7 @@ fbp:
 	.space	4
 	.comm	vinfo,160,4
 	.comm	finfo,68,4
+	
 	.text
 	.align	2
 	.global	put_pixel

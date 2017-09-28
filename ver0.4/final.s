@@ -6,19 +6,14 @@ main:
 	LDR	R0, =file	// R0 = "/dev/fb0"
 	STR	R0, [SP]	// SP+0 = "/dev/fb0"
 	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
-	BL	open		// Parameters: R0--R1
+	BL	open
 	LDR	R0, [SP]	// R0 = "/dev/fb0"
 	LDR	R1, =opcodes	// R1 = 17920 (Opcode for FPIOGET_VSCREENINFO)
 	LDR	R2, =latch+8	// R2 = vinfo
 	BL	ioctl		// Parameters: R0--R2
 	LDR	R0, [SP]	// R0 = "/dev/fb0"
-	MOV	R1, #8		// R1 = 8
-	STR	R1, [R2, #24]	// vinfo.bits_per_pixel = 8
-	LDR	R1, =opcodes+4	// R1 = 17921 (Opcode for FBIOPUT_VSCREENINFO)
-	BL	ioctl		// Parameters: R0--R2
-	LDR	R0, [SP]	// R0 = "/dev/fb0"
 	LDR	R1, =opcodes+8	// R1 = 17922 (Opcode for FBIOGET_FSCREENINFO)
-	LDR	R2, =latch+12	// R2 = finfo
+	LDR	R2, =latch	// R2 = finfo
 	BL	ioctl		// Parameters: R0--R2
 	MOV	R0, #0		// R0 = 0
 	LDR	R1, =latch+8	// R1 = vinfo
@@ -33,7 +28,12 @@ main:
 	BL	mmap		// Parameters: R0--R3, SP--SP+4
 	LDR	R1, =latch+4	// R1 = framebuffer
 	STR	R0, [R1]	// framebuffer = mmap return
-	NOP
+	MOV	R0, #0		// x = 0
+	MOV	R1, #0		// y = 0
+	MOV	R2, #255	// b = 255
+	MOV	R3, #255	// g = 255
+	MOV	R4, #255	// b = 255
+	BL	put_pixel	// Parameters: R0--R4
 	LDR	R0, =latch+4	// R0 = framebuffer
 	LDR	R1, [SP, #12]	// R1 = screensize
 	BL	munmap		// Parameters: R0--R1
@@ -42,11 +42,11 @@ main:
 	MOV	R0, #0		// R0 = 0 (return code)
 	POP	{PC}
 
-/* Parameters:
+/*  Parameters:
 	R0 = x
 	R1 = y
-	R2 = g
-	R3 = b
+	R2 = b
+	R3 = g
 	R4 = r
    Clobbers:
 	R5--R7 */
@@ -64,11 +64,11 @@ put_pixel:
 	MOV	R5, #0		// R5 = 0
 	MOV	R7, #0		// R7 = 0
 	ADD	R7, R6, R5	// R7 = R6 + 0
-	STRB	R2, [R7]	// R7 = g (green, byte)
+	STRB	R2, [R7]	// R7 = b (blue, byte)
 	MOV	R5, #1		// R5 = 1
 	MOV	R7, #0		// R7 = 0
 	ADD	R7, R6, R5	// R7 = R6 + 1
-	STRB	R3, [R7]	// R7 = b (blue, byte)
+	STRB	R3, [R7]	// R7 = g (green, byte)
 	MOV	R5, #2		// R5 = 2
 	MOV	R7, #0		// R7 = 0
 	ADD	R7, R6, R5	// R7 = R6 + 2
@@ -95,7 +95,6 @@ latch:
 	.word	finfo
 	.word	framebuffer
 	.word	vinfo
-	.word	finfo
 
 	.global opcodes
 	.align	2
