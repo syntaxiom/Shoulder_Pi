@@ -25,11 +25,21 @@ main:
 	LDR	R1, [R1]	// R1 = vinfo.xres
 	LDR	R2, [R1, #4]	// R2 = vinfo.yres
 	MUL	R1, R1, R2	// R1 = vinfo.xres * vinfo.yres
+	STR	R1, [SP, #12]	// SP+12 = screensize
 	MOV	R2, #3		// R2 = 3 (Opcode for PROT_READ | PROT_WRITE)
 	MOV	R3, #1		// R3 = 1 (Opcode for MAP_SHARED)
 	MOV	R4, #0		// R4 = 0
 	STR	R4, [SP, #4]	// SP+4 = 0
 	BL	mmap		// Parameters: R0--R3, SP--SP+4
+	LDR	R1, =latch+4	// R1 = framebuffer
+	STR	R0, [R1]	// framebuffer = mmap return
+	NOP
+	LDR	R0, =latch+4	// R0 = framebuffer
+	LDR	R1, [SP, #12]	// R1 = screensize
+	BL	munmap		// Parameters: R0--R1
+	LDR	R0, [SP]	// R0 = "/dev/fb0"
+	BL	close		// Parameters: R0
+	MOV	R0, #0		// R0 = 0 (return code)
 	POP	{PC}
 
 /* Parameters:
