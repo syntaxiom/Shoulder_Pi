@@ -33,8 +33,8 @@ put_pixel_RGB24:
 	str	fp, [sp, #-4]!
 	add	fp, sp, #0
 	sub	sp, sp, #28
-	str	r0, [fp, #-16]
-	str	r1, [fp, #-20]
+	str	r0, [fp, #-16]	// fp-16 = x
+	str	r1, [fp, #-20]	// fp-20 = y
 	str	r2, [fp, #-24]
 	str	r3, [fp, #-28]
 	ldr	r2, [fp, #-16]

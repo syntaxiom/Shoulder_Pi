@@ -5,10 +5,8 @@ main:
 	LDR	R0, =file
 	MOV	R1, #2
 	BL	open
-	LDR	R0, dump
-	MOV	R1, #34
-	STR	R1, dump
-	MOV	R0, #0
+	MOV	R0, #42
+	STR	R0, [SP]
 	POP	{PC}
 
 	.global dump
