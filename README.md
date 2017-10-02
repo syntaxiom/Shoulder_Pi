@@ -7,6 +7,9 @@ To get back to GUI mode, press Ctrl+Alt+F7.
 
 See parts 5, 6, and 7 of the compote.blogspot link. It's important for accessing RGB values.
 
+```ldr r0, =someData
+ldr r0, [r0] // Dereference it```
+
 ## Transparency/Opacity Formula
 C1 = [R1, G1, B1]
 
