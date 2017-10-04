@@ -1,0 +1,18 @@
+	.global fbp
+	.bss
+	.align	2
+	.type	fbp, %object%
+	.size	fbp, 4
+fbp:
+	.space	4
+	.comm	vinfo, 160, 4
+	.comm	finfo, 68, 4
+
+	.text
+	.align	2
+	.global	put_pixel
+	.syntax	unified
+put_pixel:
+	MOV	R5, #3
+	MUL	R0, R0, R5
+	

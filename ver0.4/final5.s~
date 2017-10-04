@@ -1,0 +1,6 @@
+	.global fbp
+	.bss
+	.align	2
+	.type	fbp, %object%
+fbp:
+	

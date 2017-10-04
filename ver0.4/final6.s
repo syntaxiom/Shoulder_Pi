@@ -12,7 +12,7 @@ fbp:
 	.align	2
 	.global main
 main:
-	LDR	R0, file	// R0 = "/dev/fb0\000"
+	LDR	R0, latch+12	// R0 = "/dev/fb0\000"
 	MOV	R1, #2		// R1 = 2 (Opcode for read+write)
 	BL	open		// Parameters: R0--R1
 	STR	R0, [SP, #0]	// SP+0 = open("/dev/fb0", O_RDWR);
@@ -37,20 +37,14 @@ main:
 	BL	mmap		// Parameters: R0--R3, SP+0--SP+4
 	LDR	R1, latch+8	// R1 = fbp
 	STR	R0, [R1]	// fbp = mmap return
-	MOV	R0, #0		// x = 0
-	MOV	R1, #0		// y = 0
-	MOV	R2, #255	// b = 255
-	MOV	R3, #255	// g = 255
-	MOV	R4, #255	// r = 255
+	MOV	R0, #0		// x
+	MOV	R1, #0		// y
+	MOV	R2, #0		// b
+	MOV	R3, #255	// g
+	MOV	R4, #0		// r
 	BL	put_pixel	// Parameters: R0--R4
-	MOV	R0, #5		// R0 = 5
-	BL	sleep		// Parameters: R0
-	LDR	R0, latch+8	// R0 = fbp
-	LDR	R1, [SP, #8]	// R1 = screensize
-	BL	munmap		// Parameters: R0--R1
-	LDR	R0, [SP, #0]	// R0 = open(...);
-	BL	close		// Parameters: R0
-	MOV	R0, #0		// R0 = 0 (return code)
+	MOV	R0, #5
+	BL	sleep
 	BAL	exit
 
 /* put_pixel
@@ -60,7 +54,7 @@ Parameters:	R0 = x
 		R3 = g
 		R4 = r
 	
-Clobbers:	R5--R7 */
+Clobbers:	R5--R6 */
 
 	.text
 	.align 2
@@ -68,25 +62,31 @@ Clobbers:	R5--R7 */
 	.syntax unified
 	.type	put_pixel, %function
 put_pixel:
-//	UXTB	R2, R2		// Extend R2 byte to unsigned 32-bit number
-//	UXTB	R3, R3		// Extend R3 byte to unsigned 32-bit number
-//	UXTB	R4, R4		// Extend R4 byte to unsigned 32-bit number
-	MOV	R5, #3		// R5 = 3 (bytes per pixel)
-	MUL	R0, R0, R5	// R0 = x * 3
-	LDR	R5, latch+4	// R5 = finfo
-	LDR	R5, [R5, #44]	// R5 = finfo.line_length
-	MUL	R1, R1, R5	// R1 = y * finfo.line_length
-	ADD	R5, R0, R1	// R5 = x * 3 + y * finfo.line_length = pix_offset
-	LDR	R6, latch+8	// R6 = fbp
-	ADD	R6, R6, R5	// R6 = fbp + pix_offset
-	STRB	R2, [R7]	// R7 = b (blue, byte)
-	MOV	R7, #0		// R7 = 0
-	ADD	R7, R6, #1	// R7 = fbp + pix_offset + 1
-	STRB	R3, [R7]	// R7 = g (green, byte)
-	MOV	R7, #0		// R7 = 0
-	ADD	R7, R6, #2	// R7 = fbp + pix_offset + 2
-	STRB	R3, [R7]	// R7 = r (red, byte)
-	MOV	PC, LR
+	UXTB	R2, R2		// Extend R2 byte to unsigned 32-bit number
+	UXTB	R3, R3		// Extend R3 byte to unsigned 32-bit number
+	UXTB	R4, R4		// Extend R4 byte to unsigned 32-bit number
+	MOV	R5, #3		// R5 = 3
+	MUL	R5, R0, R5	// R5 = x * 3
+	LDR	R6, latch+4	// R6 = finfo
+	LDR	R6, [R6, #44]	// R6 = finfo.line_length
+	MUL	R6, R1, R6	// R1 = y * finfo.line_length
+	ADD	R6, R5, R6	// R6 = x * 3 + y * finfo.line_length = pix_offset
+	STR	R6, [SP, #12]	// SP+12 = pix_offset
+	LDR	R5, latch+8	// R5 = fbp
+	LDR	R6, [SP, #12]	// R6 = pix_offset
+	ADD	R6, R5, R6	// R6 = fbp + pix_offset
+	STRB	R2, [R6]	// R6 = b (blue byte)
+	LDR	R5, latch+8	// R5 = fbp
+	LDR	R6, [SP, #12]	// R6 = pix_offset
+	ADD	R6, R5, R6	// R6 = fbp + pix_offset
+	ADD	R6, R6, #1	// R6 = fbp + pix_offset + 1
+	STRB	R3, [R6]	// R6 = g (green byte)
+	LDR	R5, latch+8	// R5 = fbp
+	LDR	R6, [SP, #12]	// R6 = pix_offset
+	ADD	R6, R5, R6	// R6 = fbp + pix_offset
+	ADD	R6, R6, #2	// R6 = fbp + pix_offset + 2
+	STRB	R4, [R6]	// R6 = r (red byte)
+	MOVAL	PC, LR
 
 	.global exit
 exit:
@@ -103,8 +103,11 @@ latch:
 	.word	vinfo
 	.word	finfo
 	.word	fbp
+	.word	file
 	
 	.global file
+	.section	.rodata
+	.align	2
 file:
 	.ascii "/dev/fb0\000"
 
