@@ -36,6 +36,8 @@ put_pixel:
 	.align	2
 	.global	main
 main:
+	@ args = 0, pretend = 0, frame = 16
+	@ frame_needed = 1, uses_anonymous_args = 0
 	PUSH	{FP, LR}
 	ADD	FP, SP, #4	// FP = SP + 4
 	SUB	SP, SP, #4	// SP = SP - 4
@@ -70,9 +72,9 @@ main:
 	STR	R0, [R1]	// fbp = mmap(...)
 	MOV	R0, #800	// x
 	MOV	R1, #800	// y
-	MOV	R2, #255	// r
+	MOV	R2, #255		// r
 	MOV	R3, #0	// g
-	MOV	R4, #0	// b
+	MOV	R4, #0		// b
 	BL	put_pixel	// Parameters: R0--R4
 	LDR	R0, LATCH+20	// R0 -> LATCH+20 = fbp
 	LDR	R0, [R0]	// R0 = fbp (dereferenced)
