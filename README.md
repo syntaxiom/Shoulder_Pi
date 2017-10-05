@@ -12,6 +12,8 @@ ldr r0, =someData
 ldr r0, [r0] // Dereference it
 ```
 
+Note: put_pixel is fully optimized. Move forward.
+
 ## Transparency/Opacity Formula
 C1 = [R1, G1, B1]
 
