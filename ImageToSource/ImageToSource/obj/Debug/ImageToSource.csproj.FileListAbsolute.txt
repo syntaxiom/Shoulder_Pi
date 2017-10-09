@@ -1,0 +1,7 @@
+C:\Users\smlwc\source\repos\ImageToSource\ImageToSource\bin\Debug\ImageToSource.exe.config
+C:\Users\smlwc\source\repos\ImageToSource\ImageToSource\bin\Debug\ImageToSource.exe
+C:\Users\smlwc\source\repos\ImageToSource\ImageToSource\bin\Debug\ImageToSource.pdb
+C:\Users\smlwc\source\repos\ImageToSource\ImageToSource\obj\Debug\ImageToSource.csprojResolveAssemblyReference.cache
+C:\Users\smlwc\source\repos\ImageToSource\ImageToSource\obj\Debug\ImageToSource.csproj.CoreCompileInputs.cache
+C:\Users\smlwc\source\repos\ImageToSource\ImageToSource\obj\Debug\ImageToSource.exe
+C:\Users\smlwc\source\repos\ImageToSource\ImageToSource\obj\Debug\ImageToSource.pdb
