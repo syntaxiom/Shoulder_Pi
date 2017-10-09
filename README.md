@@ -7,7 +7,7 @@ To get back to GUI mode, press Ctrl+Alt+F7.
 
 See parts 5, 6, and 7 of the compote.blogspot link. It's important for accessing RGB values.
 
-Maybe I have to zero out the fbp + pix_offset stuff first (store or move 0)
+Need to offset by 1 each 4 division for color
 
 ## Transparency/Opacity Formula
 C1 = [R1, G1, B1]
