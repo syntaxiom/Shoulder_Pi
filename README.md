@@ -7,7 +7,7 @@ To get back to GUI mode, press Ctrl+Alt+F7.
 
 See parts 5, 6, and 7 of the compote.blogspot link. It's important for accessing RGB values.
 
-Need to offset by 1 each 4 division for color
+Need to determine offset by `x mod 4`
 
 ## Transparency/Opacity Formula
 C1 = [R1, G1, B1]
