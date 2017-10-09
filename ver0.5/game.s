@@ -63,19 +63,20 @@ main:
 	BL	mmap		// Parameters: R0--R3, SP--SP+4
 	LDR	R1, LATCH+20	// R1 -> fbp
 	STR	R0, [R1]	// fbp = mmap(...)
-	MOV	R0, #800	// x
-	MOV	R1, #800	// y
-	MOV	R2, #255	// r
-	MOV	R3, #0		// g
-	MOV	R4, #0		// b
-	BL	put_pixel	// Parameters: R0--R4
+	MOV	R0, #200	// R0 = 200
+	STR	R0, [SP, #12]	// SP+12 = 200 = x
+	MOV	R0, #150	// R0 = 150
+	STR	R0, [SP, #16]	// SP+16 = 150 = y
+	B	show_image
+
+	.global main2
+main2:	
 	LDR	R0, LATCH+20	// R0 -> LATCH+20 = fbp
 	LDR	R0, [R0]	// R0 = fbp (dereferenced)
 	LDR	R1, [SP, #8]	// SP+8 = screensize
 	BL	munmap		// Parameters: R0--R1
 	LDR	R0, [SP]	// R0 -> SP = open(...)
 	BL	close		// Parameters: R0
-	//LDRNV	R0, [SP, #100]	// This instruction works
 	MOV	R0, #0		// R0 = 0 (return code)
 	MOVAL	R7, #1		// R7 = 1 (exit syscall)
 	SWI	0
