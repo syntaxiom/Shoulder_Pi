@@ -14,21 +14,23 @@ fbp:
 	.global	put_pixel
 put_pixel:
 	MOV	R5, #3		// R5 = 3 (bytes per pixel)
-	AND	R6, R0, #3	// R6 = R0 mod 4
 	MUL	R0, R0, R5	// R0 = x * 3
 	LDR	R5, LATCH+8	// R5 -> finfo
 	LDR	R5, [R5, #44]	// R5 = fino+44 (dereferenced) ==> finfo.line_length
 	MUL	R1, R1, R5	// R1 = y * finfo.line_length
 	ADD	R1, R0, R1	// R1 = x * 3 + y * finfo.line_length = pix_offset
+	MOV	R5, #0		// R5 = 0 (reset)
 	LDR	R0, LATCH+20	// R0 -> fbp
 	LDR	R0, [R0]	// R0 = fbp (dereferenced)
 	ADD	R0, R0, R1	// R0 = fbp + pix_offset
-	ADD	R0, R0, R6	// R0 = fbp + pix_offset + (x mod 4)
 	ADD	R0, R0, #2	// R0 = fbp + pix_offset + 2
+	STRB	R5, [R0]	// R0 = 0
 	STRB	R2, [R0]	// R0 = r
 	SUB	R0, R0, #1	// R0 = fbp + pix_offset + 1
+	STRB	R5, [R0]	// R0 = 0
 	STRB	R3, [R0]	// R0 = g
 	SUB	R0, R0, #1	// R0 = fbp + pix_offset + 0
+	STRB	R5, [R0]	// R0 = 0
 	STRB	R4, [R0]	// R0 = b
 	MOV	PC, LR
 	
@@ -64,12 +66,15 @@ main:
 	STR	R0, [SP, #4]	// SP+4 = 0
 	BL	mmap		// Parameters: R0--R3, SP--SP+4
 	LDR	R1, LATCH+20	// R1 -> fbp
+	STR	R1, [SP, #12]	// SP+12 = fbp
 	STR	R0, [R1]	// fbp = mmap(...)
-	MOV	R0, #200	// R0 = 200
-	STR	R0, [SP, #12]	// SP+12 = x_offset
-	MOV	R0, #150	// R0 = 150
-	STR	R0, [SP, #16]	// SP+16 = y_offset
-	BL	show_image
+	MOV	R0, #800
+	MOV	R1, #800
+	MOV	R2, #255
+	MOV	R3, #0
+	MOV	R4, #0
+	BL	put_pixel
+	NOP
 
 	.global main2
 main2:	
