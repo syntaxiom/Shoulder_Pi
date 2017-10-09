@@ -19,7 +19,6 @@ put_pixel:
 	LDR	R5, [R5, #44]	// R5 = fino+44 (dereferenced) ==> finfo.line_length
 	MUL	R1, R1, R5	// R1 = y * finfo.line_length
 	ADD	R1, R0, R1	// R1 = x * 3 + y * finfo.line_length = pix_offset
-	STR	R1, [FP, #-8]	// FP-8 = pix_offset
 	LDR	R0, LATCH+20	// R0 -> fbp
 	LDR	R0, [R0]	// R0 = fbp (dereferenced)
 	ADD	R0, R0, R1	// R0 = fbp + pix_offset
@@ -29,6 +28,14 @@ put_pixel:
 	STRB	R3, [R0]	// R0 = g (green byte)
 	SUB	R0, R0, #1	// R0 = fbp + pix_offset + 0
 	STRB	R4, [R0]	// R0 = b (blue byte)
+	MOV	PC, LR
+
+	.text
+	.align	2
+	.global cycle_image
+cycle_image:
+	LDR	R0, =HANDLE	// R0 -> HANDLE
+	LDR	R0, [R0]	// R0 = .skip 4 (dereferenced)
 	MOV	PC, LR
 	
 	.text
@@ -55,22 +62,33 @@ main:
 	MUL	R1, R0, R1	// R1 = vinfo.xres * vinfo.yres
 	MUL	R2, R1, R2	// R2 = R1 * vinfo.bits_per_pixel
 	LSR	R2, R2, #3	// R2 /= 8
+	STR	R2, [SP, #8]	// SP+8 = screensize
 	MOV	R0, #0		// R0 = 0
-	MOV	R1, R2		// R1 = screensize
+	LDR	R1, [SP, #8]	// SP+8 = screensize
 	MOV	R2, #3		// R2 = 3 (Opcode for PROT_READ | PROT_WRITE)
 	MOV	R3, #1		// R3 = 1 (Opcode for MAP_SHARED)
 	STR	R0, [SP, #4]	// SP+4 = 0
 	BL	mmap		// Parameters: R0--R3, SP--SP+4
 	LDR	R1, LATCH+20	// R1 -> fbp
 	STR	R0, [R1]	// fbp = mmap(...)
-	MOV	R0, #800	// x
-	MOV	R1, #800	// y
-	MOV	R2, #255	// r
-	MOV	R3, #0		// g
-	MOV	R4, #0		// b
-	BL	put_pixel	// Parameters: R0--R4
+	NOP
+	LDR	R0, =IMAGE	// R0 -> "test.bin"
+	MOV	R1, #0		// R1 = 0 (Opcode for read)
+	BL	open		// Parameters: R0--R1
+	LDR	R1, =HANDLE	// R1 -> HANDLE -> .skip 4
+	STR	R0, [R1]	// HANDLE = open(...)
+	LDR	R0, =HANDLE	// R0 -> HANDLE -> .skip 4
+	LDR	R1, =WIDTH	// R1 -> WIDTH
+	MOV	R2, #1		// R2 = 4
+	BL	read
+	NOP
+	LDR	R0, LATCH+20	// R0 -> LATCH+20 = fbp
+	LDR	R0, [R0]	// R0 = fbp (dereferenced)
+	LDR	R1, [SP, #8]	// SP+8 = screensize
+	BL	munmap		// Parameters: R0--R1
 	LDR	R0, [SP]	// R0 -> SP = open(...)
 	BL	close		// Parameters: R0
+//	LDR	R0, [SP, #100]	// This instruction works
 	MOV	R0, #0		// R0 = 0 (return code)
 	MOVAL	R7, #1		// R7 = 1 (exit syscall)
 	SWI	0
@@ -88,5 +106,13 @@ LATCH:
 	.align	2
 FILE:
 	.ascii	"/dev/fb0\000"
+
+	.data
 IMAGE:
-	.asciz	"img_test.bin"
+	.asciz "test.bin"
+HANDLE:
+	.skip	4
+WIDTH:
+	.word	0
+HEIGHT:
+	.word	0

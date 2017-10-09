@@ -2,30 +2,10 @@
 This is a general purpose game engine that runs on the Raspberry Pi 3 using ARM assembly.
 
 ## Important notes
-
-~~You need to be in console mode (shortcut Ctrl+Alt+F1) to run the code.
+You need to be in console mode (shortcut Ctrl+Alt+F1) to run the code.
 To get back to GUI mode, press Ctrl+Alt+F7.
 
 See parts 5, 6, and 7 of the compote.blogspot link. It's important for accessing RGB values.
-
-```
-ldr r0, =someData
-ldr r0, [r0] // Dereference it
-```
-
-Note: put_pixel is fully optimized. Move forward.
-
-## Ideas
-
-X = 16-bit number
-
-Y = 16-bit number
-
-Store X into upper-half of target Register
-
-Store Y into lower-half of target Register
-
-Use the Stack Pointer (SP) resiter offset to store stuff at X and Y coordinates
 
 ## Transparency/Opacity Formula
 C1 = [R1, G1, B1]
