@@ -1,0 +1,23 @@
+Have each image info stored in image_list.s
+Use register offset LDR and STR
+
+	.text
+	.global IMAGE_LIST
+IMAGE_LIST:
+	.word	CYNDAQUIL
+	.word	250
+	.word	250
+	.word	TOADADILE
+	.word	340
+	.word	310
+	.word	CHICARITA
+	.word	175
+	.word	165
+
+	.section	rodata
+CYNDAQUIL:
+	.ascii	"full/path/to/cyndaquil.bin\000"
+TOADADILE:
+	.ascii	"full/path/to/toadadile.bin\000"
+CHICARITA:
+	.ascii	"full/path/to/chicarita.bin\000"
