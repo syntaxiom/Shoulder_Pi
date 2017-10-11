@@ -9,10 +9,19 @@ fbp:
 	.comm	finfo,68,4
 
 	.text
+	/* R0 = x offset | R1 = y offset */
 	.global show_image
 show_image:
-	NOP
+	MOV	R2, #4		// R2 = 4 (bytes per pixel)
+	MUL	R0, R0, R2	// R0 = x * 4
+	LDR	R2, [SP, #20]	// R2 = finfo.line_length
+	MUL	R1, R1, R2	// R1 = y * finfo.line_length
+	ADD	R1, R0, R1	// R1 = x * 4 + y * finfo.line_length = pix_offset
+	LDR	R0, LATCH+20	// R0 -> fbp
+	LDR	R0, [R0]	// R0 = fbp (dereferenced)
+	add	R0, R0, R1	// R0 = fbp + pix_offset
 
+	/* R0 = fbp + pix_offset | R1 = x | R2 = y */
 pixel_loop:
 	MOV	PC, LR
 	
@@ -70,9 +79,14 @@ main:
 	MOV	R3, #1		// R3 = 1 (Opcode for MAP_SHARED)
 	BL	mmap		// Parameters: R0--R3, SP--SP+4
 	STR	R0, [SP, #16]	// SP+16 = mmap(...)
+	LDR	R0, LATCH+8	// R0 -> finfo
+	LDR	R0, [R0, #44]	// R0 = finfo.line_length (dereferenced)
+	STR	R0, [SP, #20]	// SP+20 = finfo.line_length
+	MOV	R0, #100	// R0 = 100
+	MOV	R1, #800	// R1 = 800
 	BL	show_image	// Parameters: R0--R1
 	NOP
-	LDR	R0, [SP, #12]	// R0 -> SP+12 = open("/dev/fb0\000")
+	LDR	R0, [SP, #12]	// R0 = open("/dev/fb0\000")
 	BL	close		// Parameters: R0
 	NOP
 	LDR	R0, [SP]	// R0 = open("/home/pi/Desktop/shoulder/images/image.bin\000")

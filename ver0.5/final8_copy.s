@@ -13,7 +13,7 @@ fbp:
 	.align	2
 	.global	put_pixel
 put_pixel:
-	MOV	R5, #3		// R5 = 3 (bytes per pixel)
+	MOV	R5, #4		// R5 = 3 (bytes per pixel)
 	MUL	R0, R0, R5	// R0 = x * 3
 	LDR	R5, LATCH+8	// R5 -> finfo
 	LDR	R5, [R5, #44]	// R5 = fino+44 (dereferenced) ==> finfo.line_length
