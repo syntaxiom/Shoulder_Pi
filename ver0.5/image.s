@@ -1,18 +1,20 @@
 	.text
 
-	/* R0 = Image list offset  */
+	/* R1 = Image list offset  */
 	.global show_image
 show_image:
-	LDR	R1, =IMAGE_LIST
-	LDR	R1, [R1, +R0]
-	MOV	PC, LR
+	LDR	R0, IMAGE_LIST
+	MOV	R1, #2
+	BL	open
+	BAL	main2
 	
-	.global IMAGE_LIST
+	.align 2
 IMAGE_LIST:
 	.word	CYNDAQUIL
 	.word	250
 	.word	250
 
 	.section	rodata
+	.align	2
 CYNDAQUIL:
-	.ascii "/home/pi/Desktop/shoulder/images/cyndaquil.bin\000"
+	.asciz "/home/pi/Desktop/shoulder/images/cyndaquil.txt"

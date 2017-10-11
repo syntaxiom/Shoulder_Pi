@@ -1,6 +1,8 @@
 Have each image info stored in image_list.s
 Use register offset LDR and STR
 
+Load the images first, then open the framebuffer
+
 	.text
 	.global IMAGE_LIST
 IMAGE_LIST:
