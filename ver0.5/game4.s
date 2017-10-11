@@ -46,8 +46,11 @@ main:
 	STR	R0, [SP, #12]	// SP+12 = finfo.line_length
 	LDR	R0, [SP]	// R0 = open("/dev/fb0\000")
 	STR	R0, [SP, #16]	// SP+16 = open("/dev/fb0\000")
-	LDR	R0, =LATCH
-	LDR	R0, [R0, #12]
+	NOP
+	//LDR	R0, =LATCH	// R0 -> LATCH
+	//LDR	R0, [R0, #12]	// R0 = 17920
+	MOV	R0, #4
+	BL	show_image
 	NOP
 
 	.global main2
@@ -70,12 +73,8 @@ LATCH:
 	.word	17920
 	.word	17922
 	.word	fbp
-	.word	IMAGE
 
 	.section	.rodata
 	.align	2
 FRAMEBUFFER:
 	.ascii	"/dev/fb0\000"
-
-IMAGE:
-	.ascii	"/home/pi/Desktop/shoulder/image.bin\000"
