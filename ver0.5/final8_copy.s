@@ -75,7 +75,7 @@ main:
 	BL	munmap		// Parameters: R0--R1
 	LDR	R0, [SP]	// R0 -> SP = open(...)
 	BL	close		// Parameters: R0
-	//LDRNV	R0, [SP, #100]	// This instruction works
+	//LDR	R0, [SP, #100]	// This instruction works
 	MOV	R0, #0		// R0 = 0 (return code)
 	MOVAL	R7, #1		// R7 = 1 (exit syscall)
 	SWI	0
