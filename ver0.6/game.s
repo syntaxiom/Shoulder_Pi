@@ -5,11 +5,25 @@
 	.size	fbp, 4
 fbp:
 	.space	4
+	
 	.comm	vinfo,160,4
 	.comm	finfo,68,4
 
-	/* R0 = x, R1 = y, R2 = color */
+	.global img
+	.bss
+	.align	2
+	.type	img, %object
+	.size	img, 4
+img:
+	.space	4
+
+	/* R0 = x, R1 = y */
 	.text
+	.align	2
+	.global pixel_loop
+pixel_loop:
+	NOP
+	
 	.align	2
 	.global	put_pixel
 put_pixel:
@@ -33,6 +47,7 @@ main:
 	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
 	BL	open		// Parameters: R0--R1
 	STR	R0, [SP]	// SP = open(...)
+	STR	R0, [SP, #12]	// SP+12 = open(...)
 	LDR	R1, LATCH+12	// R1 = 17920 (Opcode for FBIOGET_VSCREENINFO)
 	LDR	R2, LATCH+4	// R2 -> .L6+4 -> vinfo (Changed)
 	BL	ioctl		// Parameters: R0--R2
@@ -58,34 +73,58 @@ main:
 	BL	mmap		// Parameters: R0--R3, SP--SP+4
 	LDR	R1, LATCH+20	// R1 -> fbp
 	STR	R0, [R1]	// fbp = mmap(...)
-	MOV	R0, #800	// x
-	MOV	R1, #800	// y
-	LDR	R2, =0x00FF0000	// color
-	BL	put_pixel	// Parameters: R0--R4
+	NOP
+	LDR	R0, LATCH+24	// R0 -> "/home/pi/Desktop/image.bin\000"
+	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
+	BL	open		// Parameters: R0--R1
+	STR	R0, [SP]	// SP = open(...)
+	LDR	R0, LATCH+28	// R0 = 250
+	LDR	R1, LATCH+32	// R1 = 250
+	MOV	R2, #4		// R2 = 4 (bytes per pixel)
+	MUL	R1, R1, R0	// R1 = 250 * 250
+	MUL	R1, R1, R2	// R1 = 250 * 250 * 4 = imagesize
+	STR	R1, [SP, #16]	// SP+16 = imagesize
+	LDR	R0, [SP, #8]	// R0 = screensize
+	MOV	R2, #3		// R2 = 3 (Opcode for PROT_READ | PROT_WRITE)
+	MOV	R3, #1		// R3 = 1 (Opcode for MAP_SHARED)
+	BL	mmap		// Parameters: R0--R3, SP--SP+4
+	LDR	R1, LATCH+36	// R1 -> img
+	STR	R0, [R1]	// img = mmap(...)
+	NOP
+	NOP
+	LDR	R0, LATCH+36	// R0 -> img
+	LDR	R0, [R0]	// R0 = img (dereferenced)
+	LDR	R1, [SP, #16]	// R1 = imagesize
+	BL	munmap
+	LDR	R0, [SP]	// R0 = open(...)
+	BL	close
+	NOP
 	LDR	R0, LATCH+20	// R0 -> LATCH+20 = fbp
 	LDR	R0, [R0]	// R0 = fbp (dereferenced)
 	LDR	R1, [SP, #8]	// SP+8 = screensize
 	BL	munmap		// Parameters: R0--R1
-	LDR	R0, [SP]	// R0 -> SP = open(...)
+	LDR	R0, [SP, #12]	// R0 -> SP+12 = open(...)
 	BL	close		// Parameters: R0
-	//LDR	R0, [SP, #100]	// This instruction works
 	MOV	R0, #0		// R0 = 0 (return code)
 	MOVAL	R7, #1		// R7 = 1 (exit syscall)
 	SWI	0
 
 	.align	2
 LATCH:
-	.word	FILE
+	.word	FRAMEBUFFER
 	.word	vinfo
 	.word	finfo
 	.word	17920
 	.word	17922
 	.word	fbp
+	.word	IMAGE
+	.word	250
+	.word	250
+	.word	img
 
 	.section	.rodata
 	.align	2
-FILE:
+FRAMEBUFFER:
 	.ascii	"/dev/fb0\000"
-
 IMAGE:
-	.ascii "test_image.bin"
+	.ascii	"/home/pi/Desktop/image.bin\000"
