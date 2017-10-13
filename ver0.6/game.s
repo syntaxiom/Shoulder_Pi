@@ -17,27 +17,40 @@ fbp:
 img:
 	.space	4
 
-	/* R0 = x, R1 = y */
+	/* R0 = x, R1 = y, R2 = position */
 	.text
 	.align	2
 	.global pixel_loop
 pixel_loop:
-	NOP
+	ADD	R2, R2, #4	// R2 += 4
+	LDR	R3, [SP, #16]	// R3 = imagesize
+	CMP	R2, R3
+	MOVEQ	PC, LR
+	LDR	R3, LATCH+36	// R3 -> img
+	ADD	R3, R3, R2	// R3 = img + position
+	LDR	R3, [R3]	// R3 = value at R3
+	ADD	R0, R0, #1	// R0 = x + 1
+	LDR	R4, LATCH+28	// R4 = width
+	CMP	R0, R4
+	MOVGT	R0, #0
+	ADDGT	R1, R1, #1
+	LDR	R4, LATCH+32
 	
+	/* R0 = x, R1 = y, R3 = color */
 	.align	2
 	.global	put_pixel
 put_pixel:
-	MOV	R5, #4		// R5 = 4 (bytes per pixel)
-	MUL	R0, R0, R5	// R0 = x * 4
-	LDR	R5, LATCH+8	// R5 -> finfo
-	LDR	R5, [R5, #44]	// R5 = fino+44 (dereferenced) ==> finfo.line_length
-	MUL	R1, R1, R5	// R1 = y * finfo.line_length
+	MOV	R4, #4		// R4 = 4 (bytes per pixel)
+	MUL	R0, R0, R4	// R0 = x * 4
+	LDR	R4, LATCH+8	// R4 -> finfo
+	LDR	R4, [R4, #44]	// R4 = fino+44 (dereferenced) ==> finfo.line_length
+	MUL	R1, R1, R4	// R1 = y * finfo.line_length
 	ADD	R1, R0, R1	// R1 = x * 4 + y * finfo.line_length = pix_offset
 	LDR	R0, LATCH+20	// R0 -> fbp
 	LDR	R0, [R0]	// R0 = fbp (dereferenced)
 	ADD	R0, R0, R1	// R0 = fbp + pix_offset
-	STR	R2, [R0]	// R0 = color
-	MOV	PC, LR
+	STR	R3, [R0]	// R0 = color
+	BAL	pixel_loop
 	
 	.text
 	.align	2
@@ -91,6 +104,12 @@ main:
 	LDR	R1, LATCH+36	// R1 -> img
 	STR	R0, [R1]	// img = mmap(...)
 	NOP
+	MOV	R0, #-4		// R0 = -4
+	STR	R0, [SP, #20]	// SP+20 = -4
+	MOV	R0, #800	// R0 = 800
+	MOV	R1, #800	// R1 = 800
+	MOV	R2, #-4		// R2 = -4
+	BL	pixel_loop
 	NOP
 	LDR	R0, LATCH+36	// R0 -> img
 	LDR	R0, [R0]	// R0 = img (dereferenced)
