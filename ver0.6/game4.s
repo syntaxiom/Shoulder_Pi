@@ -37,8 +37,8 @@ show_image:
 	STR	R2, [SP, #16]	// SP+16 = finfo.line_length
 	MUL	R1, R1, R2	// y = y * finfo.line_length
 	MOV	R2, #0		// R2 = 0
-	STR	R0, [SP, #20]	// SP+20 = x
-	STR	R1, [SP, #24]	// SP+24 = y
+	STR	R0, [SP, #20]	// SP+20 = x * 4
+	STR	R1, [SP, #24]	// SP+24 = y * finfo.line_length
 	STR	R2, [SP, #28]	// SP+28 = offset
 
 pixel_loop:
@@ -47,8 +47,15 @@ pixel_loop:
 	MOV	R2, #4		// R2 = 4 (bytes to read)
 	LDR	R3, [SP, #28]	// R3 = offset
 	BL	pread		// Parameters: R0--R3
-	LDR	R0, =BUFFER
-	LDR	R0, [R0]
+	LDR	R0, [SP, #20]	// R0 = x * 4
+	LDR	R1, [SP, #24]	// R1 = y * finfo.line_length
+	ADD	R1, R1, R0	// R1 = x * 4 + y * finfo.line_length = pix_offset
+	LDR	R0, LATCH+20	// R0 -> fbp
+	LDR	R0, [R0]	// R0 = fbp (dereferenced)
+	ADD	R0, R0, R1	// R0 = fbp + pix_offset
+	LDR	R1, =BUFFER	// R1 -> BUFFER
+	LDR	R1, [R1]	// R1 = BUFFER (dereferenced) ==> color
+	STR	R1, [R0]	// fbp + pix_offset = color
 	BAL	main2
 	
 	.text
