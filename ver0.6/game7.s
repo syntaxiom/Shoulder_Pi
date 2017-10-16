@@ -17,7 +17,7 @@ put_pixel:
 	MUL	R0, R0, R3	// R0 = x * 4
 	LDR	R3, [SP, #12]	// R3 = finfo.line_length
 	MUL	R1, R1, R3	// R1 = y * finfo.line_length
-	ADD	R1, R0, R1	// R1 = x * 3 + y * finfo.line_length = pix_offset
+	ADD	R1, R0, R1	// R1 = x * 4 + y * finfo.line_length = pix_offset
 	LDR	R0, LATCH+20	// R0 -> fbp
 	LDR	R0, [R0]	// R0 = fbp (dereferenced)
 	ADD	R0, R0, R1	// R0 = fbp + pix_offset

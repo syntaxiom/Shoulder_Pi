@@ -2,6 +2,6 @@
 
 int main()
 {
-	lseek(0, 14, SEEK_SET);
+	lseek(0, 14, SEEK_CUR);
 	return 0;
 }

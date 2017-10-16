@@ -22,7 +22,7 @@ main:
 	@ frame_needed = 1, uses_anonymous_args = 0
 	push	{fp, lr}
 	add	fp, sp, #4
-	mov	r2, #0
+	mov	r2, #1
 	mov	r1, #14
 	mov	r0, #0
 	bl	lseek
