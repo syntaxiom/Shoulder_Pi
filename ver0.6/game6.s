@@ -25,12 +25,9 @@ put_pixel:
 	STR	R2, [R0]	// fbp + pix_offset = color
 	MOV	PC, LR
 
-	/* R0 = x, R1 = y, R2 = offset */
+	/* R0 = x, R1 = y */
 	.global	show_image
 show_image:
-	STR	R0, [SP, #16]	// SP+16 = x
-	STR	R1, [SP, #20]	// SP+20 = y
-	STR	R2, [SP, #24]	// SP+24 = offset
 	LDR	R0, [SP, #12]	// R0 = open(...)
 	LDR	R1, =BUFFER	// R1 -> BUFFER
 	MOV	R2, #4		// R2 = 4 (bytes to read)
@@ -43,20 +40,6 @@ show_image:
 	LDR	R3, LATCH+24	// R3 = full_alpha
 	CMP	R2, R3		// color ? full_alpha
 	BLGE	put_pixel	// Parameters: R0--R2
-	LDR	R0, [SP, #16]	// R0 = x
-	LDR	R1, [SP, #20]	// R1 = y
-	LDR	R2, [SP, #24]	// R2 = offset
-	ADD	R2, R2, #4	// R2 = offset + 4
-	LDR	R3, [SP, #32]	// R3 = Height + y
-	CMP	R1, R3		// y ? Height + y
-	ADDLT	R1, R1, #1	// R1 = y + 1
-	BLT	show_image	// Parameters: R0--R2
-	MOV	R1, #0		// R1 = 0
-	LDR	R3, [SP, #28]	// R3 = Width + x
-	CMP	R0, R3		// x ? Width + x
-	ADDLT	R0, R0, #1	// R1 = x + 1
-	BLT	show_image	// Parameters: R0--R2
-	BAL	main2
 	
 	.text
 	.align	2
@@ -98,13 +81,12 @@ main:
 	MOV	R0, #800	// x
 	MOV	R1, #800	// y
 	MOV	R2, #0		// offset
-	LDR	R3, IMAGES+4	// R3 = Width
-	ADD	R3, R3, R0	// R3 = Width + x
-	STR	R3, [SP, #28]	// SP+28 = Width + x
-	LDR	R3, IMAGES+8	// R3 = Height
-	ADD	R3, R3, R1	// R3 = Height + y
-	STR	R3, [SP, #32]	// SP+32 = Height + y
-	B	show_image	// Parameters: R0--R2
+	STR	R0, [SP, #16]	// SP+16 = x
+	STR	R1, [SP, #20]	// SP+20 = y
+	STR	R2, [SP, #24]	// SP+24 = offset
+	STR	R0, [SP, #28]	// SP+28 = x_start
+	STR	R1, [SP, #32]	// SP+32 = y_start
+	B	show_image	// Parameters: R0--R1
 
 main2:	
 	NOP
