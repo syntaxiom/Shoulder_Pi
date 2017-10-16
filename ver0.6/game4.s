@@ -18,18 +18,38 @@ put_pixel:
 	LDR	R5, LATCH+8	// R5 -> finfo
 	LDR	R5, [R5, #44]	// R5 = fino+44 (dereferenced) ==> finfo.line_length
 	MUL	R1, R1, R5	// R1 = y * finfo.line_length
-	ADD	R1, R0, R1	// R1 = x * 3 + y * finfo.line_length = pix_offset
+	ADD	R1, R0, R1	// R1 = x * 4 + y * finfo.line_length = pix_offset
 	LDR	R0, LATCH+20	// R0 -> fbp
 	LDR	R0, [R0]	// R0 = fbp (dereferenced)
 	ADD	R0, R0, R1	// R0 = fbp + pix_offset
 	STR	R2, [R0]	// fbp + pix_offset = color
 	MOV	PC, LR
 
+	/* R0 = x, R1 = y, SP+12 = open(...) */
 	.text
 	.align	2
 	.global	show_image
 show_image:
-	MOV	PC, LR
+	MOV	R2, #4		// R2 = 4
+	MUL	R0, R0, R2	// x = x * 4
+	LDR	R2, LATCH+8	// R2 -> finfo
+	LDR	R2, [R2, #44]	// R2 = finfo+44 (dereferenced) ==> finfo.line_length
+	STR	R2, [SP, #16]	// SP+16 = finfo.line_length
+	MUL	R1, R1, R2	// y = y * finfo.line_length
+	MOV	R2, #0		// R2 = 0
+	STR	R0, [SP, #20]	// SP+20 = x
+	STR	R1, [SP, #24]	// SP+24 = y
+	STR	R2, [SP, #28]	// SP+28 = offset
+
+pixel_loop:
+	LDR	R0, [SP, #12]	// R0 = open(...)
+	LDR	R1, =BUFFER	// R1 -> BUFFER
+	MOV	R2, #4		// R2 = 4 (bytes to read)
+	LDR	R3, [SP, #28]	// R3 = offset
+	BL	pread		// Parameters: R0--R3
+	LDR	R0, =BUFFER
+	LDR	R0, [R0]
+	BAL	main2
 	
 	.text
 	.align	2
@@ -69,12 +89,12 @@ main:
 	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
 	BL	open		// Parameters: R0--R1
 	STR	R0, [SP, #12]	// SP+12 = open(...)
-	LDR	R1, =BUFFER	// R1 -> BUFFER
-	MOV	R2, #4		// R2 = 4 (bytes to read)
-	BL	read		// Parameters: R0--R2
-	LDR	R0, =BUFFER	// R0 -> BUFFER
-	LDR	R0, [R0]	// R0 = BUFFER (dereferenced)
+	MOV	R0, #800	// x
+	MOV	R1, #800	// y
+	BL	show_image	// Parameters: R0--R1, SP+12
 	NOP
+
+main2:	
 	LDR	R0, LATCH+20	// R0 -> LATCH+20 = fbp
 	LDR	R0, [R0]	// R0 = fbp (dereferenced)
 	LDR	R1, [SP, #8]	// SP+8 = screensize
