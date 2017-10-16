@@ -24,6 +24,12 @@ put_pixel:
 	ADD	R0, R0, R1	// R0 = fbp + pix_offset
 	STR	R2, [R0]	// fbp + pix_offset = color
 	MOV	PC, LR
+
+	.text
+	.align	2
+	.global	show_image
+show_image:
+	BAL	main2
 	
 	.text
 	.align	2
@@ -70,7 +76,6 @@ main:
 	MOV	R0, #800
 	MOV	R1, #800
 	BL	put_pixel
-	NOP
 
 main2:	
 	NOP
@@ -80,10 +85,8 @@ main2:
 	BL	munmap		// Parameters: R0--R1
 	LDR	R0, [SP]	// R0 -> SP = open(...)
 	BL	close		// Parameters: R0
-	NOP
 	LDR	R0, [SP, #12]	// R0 -> SP+12 = open(...)
 	BL	close		// Parameters: R0
-	NOP
 	MOVAL	R0, #0		// R0 = 0 (return code)
 	MOVAL	R7, #1		// R7 = 1 (exit syscall)
 	SWI	0
@@ -96,14 +99,13 @@ LATCH:
 	.word	17920
 	.word	17922
 	.word	fbp
+	.word	0xFF000000
 IMAGES:
 	.word	TITLE
 	.word	250
 	.word	250
 
 	.data
-LENGTH:
-	.word	0
 BUFFER:
 	.skip	4
 
