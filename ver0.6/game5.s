@@ -40,23 +40,23 @@ show_image:
 	LDR	R1, [SP, #20]	// R1 = y
 	LDR	R2, =BUFFER	// R2 -> BUFFER
 	LDR	R2, [R2]	// R2 = BUFFER (dereferenced) ==> color
-	BL	put_pixel	// Parameters: R0--R2
+	LDR	R3, LATCH+24	// R3 = full_alpha
+	CMP	R2, R3		// color ? full_alpha
+	BLGE	put_pixel	// Parameters: R0--R2
 	LDR	R0, [SP, #16]	// R0 = x
-	LDR	R1, [SP, #28]	// R1 = Width + x
-	CMP	R0, R1		// x ? Width + x
-	ADDLT	R0, R0, #1	// R0 = x + 1
-	MOVGE	R0, #0		// R0 = 0
 	LDR	R1, [SP, #20]	// R1 = y
-	LDR	R2, [SP, #32]	// R2 = Height + y
-	CMP	R1, R2		// y ? Height + y
-	ADDLT	R1, R1, #1	// R1 = y + 1
-	MOVGE	R1, #0		// R1 = 0
-	ORR	R2, R0, R1	// R2 = x OR y
-	CMP	R2, #0		// R2 ? 0
-	BEQ	main2		// If (x OR y == 0) Then (branch main2)
 	LDR	R2, [SP, #24]	// R2 = offset
 	ADD	R2, R2, #4	// R2 = offset + 4
-	B	show_image
+	LDR	R3, [SP, #32]	// R3 = Height + y
+	CMP	R1, R3		// y ? Height + y
+	ADDLT	R1, R1, #1	// R1 = y + 1
+	BLT	show_image	// Parameters: R0--R2
+	MOV	R1, #0		// R1 = 0
+	LDR	R3, [SP, #28]	// R3 = Width + x
+	CMP	R0, R3		// x ? Width + x
+	ADDLT	R0, R0, #1	// R1 = x + 1
+	BLT	show_image	// Parameters: R0--R2
+	BAL	main2
 	
 	.text
 	.align	2
