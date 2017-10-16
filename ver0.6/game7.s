@@ -22,13 +22,32 @@ put_pixel:
 	LDR	R0, [R0]	// R0 = fbp (dereferenced)
 	ADD	R0, R0, R1	// R0 = fbp + pix_offset
 	STR	R2, [R0]	// fbp + pix_offset = color
-	MOV	PC, LR
+	B	show_image
 
+	/* SP+20 = x_start, SP+24 = y_start, SP+28 = offset*/
 	.text
 	.align	2
 	.global	show_image
 show_image:
-	MOV	PC, LR
+	LDR	R0, [SP, #16]	// R0 = open(...)
+	LDR	R1, =BUFFER	// R1 -> BUFFER
+	MOV	R2, #12		// R2 = 12 (bytes to read)
+	LDR	R3, [SP, #28]	// R3 = offset
+	BL	pread		// Parameters: R0--R3
+	CMP	R0, #0		// R0 ? 0 (end of file)
+	BEQ	main2
+	LDR	R3, =BUFFER	// R3 -> BUFFER
+	LDR	R0, [R3, #0]	// R0 = BUFFER+0 = x
+	LDR	R4, [SP, #20]	// R4 = x_start
+	ADD	R0, R0, R4	// R0 = x + x_start
+	LDR	R1, [R3, #4]	// R1 = BUFFER+4 = y
+	LDR	R4, [SP, #24]	// R4 = y_start
+	ADD	R1, R1, R4	// R1 = y + y_start
+	LDR	R2, [R3, #8]	// R2 = BUFFER+8 = color
+	LDR	R3, [SP, #28]	// R3 = offset
+	ADD	R3, R3, #12	// R3 = offset + 12
+	STR	R3, [SP, #28]	// SP+28 = offset (incremented)
+	B	put_pixel	// Parameters: R0--R2
 	
 	.text
 	.align	2
@@ -63,7 +82,6 @@ main:
 	BL	mmap		// Parameters: R0--R3, SP--SP+4
 	LDR	R1, LATCH+20	// R1 -> fbp
 	STR	R0, [R1]	// fbp = mmap(...)
-	NOP
 	LDR	R0, LATCH+8	// R0 -> finfo
 	LDR	R0, [R0, #44]	// R0 = finfo+44 (dereferenced) ==> finfo.line_length
 	STR	R0, [SP, #12]	// SP+12 = finfo.line_length
@@ -71,20 +89,23 @@ main:
 	LDR	R0, IMAGES	// R0 -> IMAGES -> TITLE
 	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
 	BL	open		// Parameters: R0--R1
-	STR	R0, [SP, #16]	// SP+12 = open(...)
-	NOP
-	MOV	R0, #800
-	MOV	R1, #800
-	LDR	R2, =0x00FF0000
-	BL	put_pixel
-	NOP
+	STR	R0, [SP, #16]	// SP+16 = open(...)
+	MOV	R0, #800	// x_start
+	MOV	R1, #800	// y_start
+	MOV	R2, #0		// offset
+	STR	R0, [SP, #20]	// SP+20 = x_start
+	STR	R1, [SP, #24]	// SP+24 = y_start
+	STR	R2, [SP, #28]	// SP+28 = offset
+	BL	show_image	// Parameters: SP+20--SP+24
+
+main2:	
 	LDR	R0, LATCH+20	// R0 -> LATCH+20 = fbp
 	LDR	R0, [R0]	// R0 = fbp (dereferenced)
 	LDR	R1, [SP, #8]	// SP+8 = screensize
 	BL	munmap		// Parameters: R0--R1
 	LDR	R0, [SP]	// R0 -> SP = open(...)
 	BL	close		// Parameters: R0
-	LDR	R0, [SP, #16]	// R0 -> SP+12 = open(...)
+	LDR	R0, [SP, #16]	// R0 -> SP+16 = open(...)
 	BL	close		// Parameters: R0
 	MOVAL	R0, #0		// R0 = 0 (return code)
 	MOVAL	R7, #1		// R7 = 1 (exit syscall)
