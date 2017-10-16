@@ -13,11 +13,11 @@ fbp:
 	.align	2
 	.global	put_pixel
 put_pixel:
-	MOV	R5, #4		// R5 = 4 (bytes per pixel)
-	MUL	R0, R0, R5	// R0 = x * 4
-	LDR	R5, LATCH+8	// R5 -> finfo
-	LDR	R5, [R5, #44]	// R5 = fino+44 (dereferenced) ==> finfo.line_length
-	MUL	R1, R1, R5	// R1 = y * finfo.line_length
+	MOV	R3, #4		// R3 = 4 (bytes per pixel)
+	MUL	R0, R0, R3	// R0 = x * 4
+	LDR	R3, LATCH+8	// R3 -> finfo
+	LDR	R3, [R3, #44]	// R3 = fino+44 (dereferenced) ==> finfo.line_length
+	MUL	R1, R1, R3	// R1 = y * finfo.line_length
 	ADD	R1, R0, R1	// R1 = x * 3 + y * finfo.line_length = pix_offset
 	LDR	R0, LATCH+20	// R0 -> fbp
 	LDR	R0, [R0]	// R0 = fbp (dereferenced)
@@ -25,11 +25,38 @@ put_pixel:
 	STR	R2, [R0]	// fbp + pix_offset = color
 	MOV	PC, LR
 
-	.text
-	.align	2
+	/* R0 = x, R1 = y, R2 = offset */
 	.global	show_image
 show_image:
-	BAL	main2
+	STR	R0, [SP, #16]	// SP+16 = x
+	STR	R1, [SP, #20]	// SP+20 = y
+	STR	R2, [SP, #24]	// SP+24 = offset
+	LDR	R0, [SP, #12]	// R0 = open(...)
+	LDR	R1, =BUFFER	// R1 -> BUFFER
+	MOV	R2, #4		// R2 = 4 (bytes to read)
+	LDR	R3, [SP, #24]	// R3 = offset
+	BL	pread		// Parameters: R0--R3
+	LDR	R0, [SP, #16]	// R0 = x
+	LDR	R1, [SP, #20]	// R1 = y
+	LDR	R2, =BUFFER	// R2 -> BUFFER
+	LDR	R2, [R2]	// R2 = BUFFER (dereferenced) ==> color
+	BL	put_pixel	// Parameters: R0--R2
+	LDR	R0, [SP, #16]	// R0 = x
+	LDR	R1, [SP, #28]	// R1 = Width + x
+	CMP	R0, R1		// x ? Width + x
+	ADDLT	R0, R0, #1	// R0 = x + 1
+	MOVGE	R0, #0		// R0 = 0
+	LDR	R1, [SP, #20]	// R1 = y
+	LDR	R2, [SP, #32]	// R2 = Height + y
+	CMP	R1, R2		// y ? Height + y
+	ADDLT	R1, R1, #1	// R1 = y + 1
+	MOVGE	R1, #0		// R1 = 0
+	ORR	R2, R0, R1	// R2 = x OR y
+	CMP	R2, #0		// R2 ? 0
+	BEQ	main2		// If (x OR y == 0) Then (branch main2)
+	LDR	R2, [SP, #24]	// R2 = offset
+	ADD	R2, R2, #4	// R2 = offset + 4
+	B	show_image
 	
 	.text
 	.align	2
@@ -68,14 +95,16 @@ main:
 	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
 	BL	open		// Parameters: R0--R1
 	STR	R0, [SP, #12]	// SP+12 = open(...)
-	LDR	R1, =BUFFER	// R1 -> BUFFER
-	MOV	R2, #4		// R2 = 4 (bytes to read)
-	BL	read		// Parameters: R0--R2
-	LDR	R2, =BUFFER	// R2 -> BUFFER
-	LDR	R2, [R2]	// R2 = BUFFER (dereferenced)
-	MOV	R0, #800
-	MOV	R1, #800
-	BL	put_pixel
+	MOV	R0, #800	// x
+	MOV	R1, #800	// y
+	MOV	R2, #0		// offset
+	LDR	R3, IMAGES+4	// R3 = Width
+	ADD	R3, R3, R0	// R3 = Width + x
+	STR	R3, [SP, #28]	// SP+28 = Width + x
+	LDR	R3, IMAGES+8	// R3 = Height
+	ADD	R3, R3, R1	// R3 = Height + y
+	STR	R3, [SP, #32]	// SP+32 = Height + y
+	B	show_image	// Parameters: R0--R2
 
 main2:	
 	NOP
