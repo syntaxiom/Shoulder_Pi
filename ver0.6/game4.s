@@ -40,8 +40,9 @@ show_image:
 	STR	R0, [SP, #20]	// SP+20 = x * 4
 	STR	R1, [SP, #24]	// SP+24 = y * finfo.line_length
 	STR	R2, [SP, #28]	// SP+28 = offset
-
-pixel_loop:
+	STR	R2, [SP, #32]	// SP+32 = x_pos
+	STR	R2, [SP, #36]	// SP+36 = y_pos
+	NOP
 	LDR	R0, [SP, #12]	// R0 = open(...)
 	LDR	R1, =BUFFER	// R1 -> BUFFER
 	MOV	R2, #4		// R2 = 4 (bytes to read)
@@ -55,7 +56,29 @@ pixel_loop:
 	ADD	R0, R0, R1	// R0 = fbp + pix_offset
 	LDR	R1, =BUFFER	// R1 -> BUFFER
 	LDR	R1, [R1]	// R1 = BUFFER (dereferenced) ==> color
-	STR	R1, [R0]	// fbp + pix_offset = color
+	LDR	R2, =0xFF000000	// R2 = full_alpha
+	CMP	R1, R2		// color ? R2
+	STRGE	R1, [R0]	// If (color >= full_alpha), Then (fbp + pix_offset = color)
+	NOP
+	LDR	R0, [SP, #36]	// R0 = y_pos
+	LDR	R1, IMAGES+8	// R1 = Height
+	CMP	R0, R1		// y_pos ? Height
+	ADDLT	R0, R0, #1	// R0 = y_pos + 1
+	MOVGE	R0, #0		// R0 = 0
+	STR	R0, [SP, #36]	// SP+36 = y_pos (incremented or reset)
+	NOP
+	LDR	R0, [SP, #32]	// R0 = x_pos
+	LDR	R1, IMAGES+4	// R1 = Width
+	CMP	R0, R1		// x_pos ? Height
+	ADDLT	R0, R0, #1	// R0 = x_pos + 1
+	MOVGE	R0, #0		// R0 = 0
+	STR	R0, [SP, #32]	// SP+32 = x_pos (incremented or reset)
+	NOP
+	LDR	R0, [SP, #36]	// R0 = y_pos
+	LDR	R1, [SP, #32]	// R1 = x_pos
+	ORR	R0, R0, R1	// R0 = y_pos OR x_pos
+	CMP	R0, #0		// y_pos OR x_pos ? 0
+	BEQ	main2
 	BAL	main2
 	
 	.text
