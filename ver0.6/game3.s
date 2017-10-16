@@ -69,6 +69,11 @@ main:
 	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
 	BL	open		// Parameters: R0--R1
 	STR	R0, [SP, #12]	// SP+12 = open(...)
+	LDR	R1, =BUFFER	// R1 -> BUFFER
+	MOV	R2, #4		// R2 = 4 (bytes to read)
+	BL	read		// Parameters: R0--R2
+	LDR	R0, =BUFFER	// R0 -> BUFFER
+	LDR	R0, [R0]	// R0 = BUFFER (dereferenced)
 	NOP
 	LDR	R0, LATCH+20	// R0 -> LATCH+20 = fbp
 	LDR	R0, [R0]	// R0 = fbp (dereferenced)
@@ -86,7 +91,7 @@ main:
 
 	.align	2
 LATCH:
-	.word	FILE
+	.word	FRAMEBUFFER
 	.word	vinfo
 	.word	finfo
 	.word	17920
@@ -100,10 +105,12 @@ IMAGES:
 	.data
 LENGTH:
 	.word	0
+BUFFER:
+	.skip	4
 
 	.section	.rodata
 	.align	2
-FILE:
+FRAMEBUFFER:
 	.ascii	"/dev/fb0\000"
 TITLE:
 	.ascii	"/home/pi/Desktop/image.bin\000"
