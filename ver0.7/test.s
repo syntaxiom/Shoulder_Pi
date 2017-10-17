@@ -22,28 +22,44 @@ put_pixel:
 	LDR	R0, [R0]	// R0 = fbp (dereferenced)
 	ADD	R0, R0, R1	// R0 = fbp + pix_offset
 	STR	R2, [R0]	// fbp + pix_offset = color
-	B	show_image
+	BAL	main2
 
-	/* SP+20 = x_start, SP+24 = y_start, SP+28 = offset*/
+	/* R0 = x, R1 = y, R2 = color */
 	.text
 	.align	2
-	.global	show_image
-show_image:
-	LDR	R0, [SP, #16]	// R0 = open(...)
-	LDR	R1, =BUFFER	// R1 -> BUFFER
-	MOV	R2, #8		// R2 = 8 (bytes to read)
-	BL	read		// Parameters: R0--R3
-	CMP	R0, #0		// R0 ? 0 (end of file)
-	BEQ	main2
-	LDR	R3, =BUFFER	// R3 -> BUFFER
-	LDR	R0, [R3, #0]	// R0 = BUFFER+0 = x
-	LDR	R4, [SP, #20]	// R4 = x_start
-	ADD	R0, R0, R4	// R0 = x + x_start
-	LDR	R1, [R3, #4]	// R1 = BUFFER+4 = y
-	LDR	R4, [SP, #24]	// R4 = y_start
-	ADD	R1, R1, R4	// R1 = y + y_start
-	LDR	R2, [R3, #8]	// R2 = BUFFER+8 = color
-	B	put_pixel	// Parameters: R0--R2
+	.global	set_pixel
+set_pixel:
+	MOV	R3, #4		// R3 = 4 (bytes per pixel)
+	MUL	R0, R0, R3	// R0 = x * 4
+	LDR	R3, [SP, #12]	// R3 = finfo.line_length
+	MUL	R1, R1, R3	// R1 = y * finfo.line_length
+	ADD	R1, R0, R1	// R1 = x * 4 + y * finfo.line_length = pix_offset
+	STR	R1, [SP, #20]	// SP+20 = pix_offset
+	STR	R2, [SP, #24]	// SP+24 = color
+	LDR	R0, LATCH+20	// R0 -> fbp
+	LDR	R0, [R0]	// R0 = fbp (dereferenced)
+	ADD	R0, R0, R1	// R0 = fbp + pix_offset
+	STR	R2, [R0]	// fbp + pix_offset = color
+	MOV	R3, #20		// R3 = (loop)
+	LDR	R4, LATCH+20	// R4 -> fbp
+	BAL	move_pixel
+
+	.text
+	.align	2
+	.global	move_pixel
+move_pixel:
+	CMP	R3, #0		// R3 ? 0
+	BLT	main2		// Branch Less Than main2
+	LDR	R0, [R4]	// R0 = fbp (dereferenced)
+	LDR	R1, [SP, #20]	// R1 = pix_offset
+	LDR	R2, [SP, #12]	// R2 = finfo.line_length
+	ADD	R1, R1, R2	// R1 = pix_offset + finfo.line_length
+	STR	R1, [SP, #20]	// SP+20 = pix_offset (vertical increment)
+	ADD	R0, R0, R1	// R0 = fbp + pix_offset
+	LDR	R2, [SP, #24]	// R2 = color
+	STR	R2, [R0]	// fbp + pix_offset = color
+	SUB	R3, R3, #1	// R3 = loop - 1
+	BAL	move_pixel
 	
 	.text
 	.align	2
@@ -86,13 +102,10 @@ main:
 	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
 	BL	open		// Parameters: R0--R1
 	STR	R0, [SP, #16]	// SP+16 = open(...)
-	MOV	R0, #800	// x_start
-	MOV	R1, #800	// y_start
-	MOV	R2, #0		// offset
-	STR	R0, [SP, #20]	// SP+20 = x_start
-	STR	R1, [SP, #24]	// SP+24 = y_start
-	STR	R2, [SP, #28]	// SP+28 = offset
-	BL	show_image	// Parameters: SP+20--SP+24
+	MOV	R0, #800	// x
+	MOV	R1, #800	// y
+	LDR	R2, =0x00FF0000	// color
+	BAL	set_pixel	// Parameters: R0--R2
 
 main2:	
 	LDR	R0, LATCH+20	// R0 -> LATCH+20 = fbp

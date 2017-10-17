@@ -5,26 +5,12 @@
 	.size	fbp, 4
 fbp:
 	.space	4
+	
 	.comm	vinfo,160,4
 	.comm	finfo,68,4
-
-	/* R0 = x, R1 = y, R2 = color */
-	.text
-	.align	2
-	.global	put_pixel
-put_pixel:
-	MOV	R3, #4		// R3 = 4 (bytes per pixel)
-	MUL	R0, R0, R3	// R0 = x * 4
-	LDR	R3, [SP, #12]	// R3 = finfo.line_length
-	MUL	R1, R1, R3	// R1 = y * finfo.line_length
-	ADD	R1, R0, R1	// R1 = x * 4 + y * finfo.line_length = pix_offset
-	LDR	R0, LATCH+20	// R0 -> fbp
-	LDR	R0, [R0]	// R0 = fbp (dereferenced)
-	ADD	R0, R0, R1	// R0 = fbp + pix_offset
-	STR	R2, [R0]	// fbp + pix_offset = color
-	B	show_image
-
-	/* SP+20 = x_start, SP+24 = y_start, SP+28 = offset*/
+	
+	/* R0 = open(...), R1 -> BUFFER, R2 = bytes to read,
+	SP+20 = pix_offset */
 	.text
 	.align	2
 	.global	show_image
@@ -32,18 +18,22 @@ show_image:
 	LDR	R0, [SP, #16]	// R0 = open(...)
 	LDR	R1, =BUFFER	// R1 -> BUFFER
 	MOV	R2, #8		// R2 = 8 (bytes to read)
-	BL	read		// Parameters: R0--R3
-	CMP	R0, #0		// R0 ? 0 (end of file)
-	BEQ	main2
-	LDR	R3, =BUFFER	// R3 -> BUFFER
-	LDR	R0, [R3, #0]	// R0 = BUFFER+0 = x
-	LDR	R4, [SP, #20]	// R4 = x_start
-	ADD	R0, R0, R4	// R0 = x + x_start
-	LDR	R1, [R3, #4]	// R1 = BUFFER+4 = y
-	LDR	R4, [SP, #24]	// R4 = y_start
-	ADD	R1, R1, R4	// R1 = y + y_start
-	LDR	R2, [R3, #8]	// R2 = BUFFER+8 = color
-	B	put_pixel	// Parameters: R0--R2
+	BL	read		// Parameters: R0--R2
+	CMP	R0, #0		// R0 ? 0
+	BEQ	main2		// Branch to main2 if return code 0 (end of file)
+	LDR	R3, LATCH+20	// R3 -> fbp
+	LDR	R4, =BUFFER	// R4 -> BUFFER
+	LDR	R5, [R4, #0]	// R5 = BUFFER+0 (dereferenced) ==> location
+	LDR	R6, [R4, #4]	// R6 = BUFFER+4 (dereferenced) ==> color
+	LDR	R4, =0xFF000000	// R4 = full_alpha
+	CMP	R6, R4		// color ? full_alpha
+	BLT	show_image
+	LDR	R4, [SP, #20]	// R4 = pix_offset
+	ADD	R5, R5, R4	// R5 = location + pix_offset
+	LDR	R4, [R3]	// R4 = fbp (dereferenced)
+	ADD	R4, R4, R5	// R4 = fbp + pix_offset
+	STR	R6, [R4]	// fbp + pix_offset = color
+	BAL	show_image
 	
 	.text
 	.align	2
@@ -88,11 +78,15 @@ main:
 	STR	R0, [SP, #16]	// SP+16 = open(...)
 	MOV	R0, #800	// x_start
 	MOV	R1, #800	// y_start
-	MOV	R2, #0		// offset
-	STR	R0, [SP, #20]	// SP+20 = x_start
-	STR	R1, [SP, #24]	// SP+24 = y_start
-	STR	R2, [SP, #28]	// SP+28 = offset
-	BL	show_image	// Parameters: SP+20--SP+24
+	LSL	R0, R0, #2	// R0 = x_start * 4
+	LDR	R2, [SP, #12]	// R2 = finfo.line_length
+	MUL	R1, R1, R2	// R1 = y_start * finfo.line_length
+	ADD	R0, R1, R2	// R0 = x_start * 4 + y_start * finfo.line_length = pix_offset
+	STR	R0, [SP, #20]	// SP+20 = pix_offset
+	LDR	R0, [SP, #16]	// R0 = open(...)
+	LDR	R1, =BUFFER	// R1 -> BUFFER
+	MOV	R2, #8		// R2 = 8 (bytes to read)
+	BL	show_image	// Parameters: R0--R2, SP+20
 
 main2:	
 	LDR	R0, LATCH+20	// R0 -> LATCH+20 = fbp
