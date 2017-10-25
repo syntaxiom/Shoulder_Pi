@@ -20,7 +20,7 @@ put_screen:
 	STR	R4, [R5]	// fbp + offset = color
 	ADD	R1, R1, #4	// R1 = offset + 4 (incremented)
 	CMP	R1, R3		// offset ? screensize
-	MOVGT	PC, LR		// (Go back)
+	MOVEQ	PC, LR		// (Go back)
 	BAL	put_screen	// Parameters: R0--R3
 	
 	.align	2
