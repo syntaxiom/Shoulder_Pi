@@ -83,13 +83,13 @@ LATCH:
 	.word	17920
 	.word	17922
 	.word	fbp
-	.word	0x7E9000	// Hard-coded for now
+	.word	0x500000	// Hard-coded for now
 SCREEN:
 	.word	TITLE
 
 	.data
 BUFFER:
-	.skip	0x7E9000
+	.skip	0x500000
 
 	.section	.rodata
 	.align	2
