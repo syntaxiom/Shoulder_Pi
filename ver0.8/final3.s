@@ -11,13 +11,13 @@ fbp:
 
 	.text
 
-	/* R0 -> BUFFER, R1 = offset, R2 = fbp, R3 = screensize */
+	/* R0 -> BUFFER, R1 = offset, R2 = fbp, R3 = screensize * 2 */
 	.global put_screen
 put_screen:
-	LDR	R4, [R0, R1]	// R4 = BUFFER+R1 (dereferenced) = color
-	ADD	R2, R2, #4	// R2 = fbp + offset
-	STR	R4, [R2]	// fbp + offset = color
-	ADD	R1, R1, #4	// R1 = offset + 4 (incremented)
+	LDRD	R4, [R0, R1]	// R4 = BUFFER+R1 (dereferenced) = color
+	STRD	R4, [R2]	// fbp + offset = color
+	ADD	R2, R2, #8	// R2 = fbp + offset
+	ADD	R1, R1, #8	// R1 = offset + 4 (incremented)
 	CMP	R1, R3		// offset ? screensize
 	MOVEQ	PC, LR		// (Go back)
 	BAL	put_screen	// Parameters: R0--R3
@@ -58,6 +58,7 @@ main1:
 	LDR	R2, LATCH+20	// R2 -> fbp
 	LDR	R2, [R2]	// R2 = fbp (dereferenced)
 	LDR	R3, LATCH+24	// R3 = screensize
+	MOV	R5, #0		// TESTING PURPOSES
 	BL	put_screen	// Parameters: R0--R3
 
 main2:
