@@ -17,7 +17,7 @@ put_screen:
 	LDRD	R4, [R0, R1]	// R4 = BUFFER+R1 (dereferenced) = color
 	STRD	R4, [R2]	// fbp + offset = color
 	ADD	R2, R2, #8	// R2 = fbp + offset
-	ADD	R1, R1, #8	// R1 = offset + 4 (incremented)
+	ADD	R1, R1, #8	// R1 = offset + 8 (incremented)
 	CMP	R1, R3		// offset ? screensize
 	MOVEQ	PC, LR		// (Go back)
 	BAL	put_screen	// Parameters: R0--R3
@@ -84,13 +84,13 @@ LATCH:
 	.word	17920
 	.word	17922
 	.word	fbp
-	.word	0x7E9000	// Hard-coded for now
+	.word	0x500000	// Hard-coded for now
 SCREEN:
 	.word	TITLE
 
 	.data
 BUFFER:
-	.skip	0x7E9000
+	.skip	0x500000
 
 	.section	.rodata
 	.align	2
