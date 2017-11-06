@@ -11,7 +11,7 @@ fbp:
 
 	.text
 
-	/* R0 -> BUFFER, R1 = offset, R2 = fbp, R3 = screensize * 2 */
+	/* R0 -> BUFFER, R1 = offset, R2 = fbp, R3 = screensize */
 	.global put_screen
 put_screen:
 	LDRD	R4, [R0, R1]	// R4 = BUFFER+R1 (dereferenced) = color
