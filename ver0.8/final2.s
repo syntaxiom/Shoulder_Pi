@@ -14,10 +14,10 @@ fbp:
 	/* R0 -> BUFFER, R1 = offset, R2 -> fbp, R3 = screensize */
 	.global put_screen
 put_screen:
-	LDR	Q0, [R0, R1]	// Q0 = BUFFER+R1 (dereferenced) = color
+	LDR	R0, [R0, R1]	// Q0 = BUFFER+R1 (dereferenced) = color
 	LDR	R5, [R2]	// R5 = fbp (dereferenced)
 	ADD	R5, R5, R1	// R5 = fbp + offset
-	STR	Q0, [R5]	// fbp + offset = color
+	STR	R0, [R5]	// fbp + offset = color
 	ADD	R1, R1, #8	// R1 = offset + 16 (incremented)
 	CMP	R1, R3		// offset ? screensize
 	MOVEQ	PC, LR		// (Go back)

@@ -19,11 +19,14 @@ put_screen:
 	ADD	R2, R2, #8	// R2 = fbp + buffer_offset
 	ADD	R1, R1, #8	// R1 = offset + 8 (incremented)
 	CMP	R1, R3		// offset ? screensize
-	MOVEQ	PC, LR		// (Go back)
+	BEQ	buffer_clear	// (Break)
 	BAL	put_screen	// Parameters: R0--R3
 
 buffer_clear:
-	MOV	PC, LR
+	LDR	R0, [SP, #12]	// R0 = value_fbp
+	LDR	R1, LATCH+20	// R1 -> fbp
+	STR	R0, [R1]	// fbp = value_fbp
+	MOV	PC, LR		// (Go back)
 	
 	.global	main
 main:
