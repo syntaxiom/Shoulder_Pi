@@ -11,7 +11,7 @@ fbp:
 
 	.text
 
-	/* R0 -> BUFFER, R1 = fbp */
+	/* R0 -> BUFFER, R1 = fbp (dereferenced) */
 	.global put_screen
 put_screen:
 	LDRD	R2, [R0, #-8]!
