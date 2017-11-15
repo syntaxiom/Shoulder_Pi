@@ -58,8 +58,8 @@ main:
 	LDR	R1, =SIZE	// R1 -> SIZE
 	MOV	R2, #4		// R2 = 4 (bytes to read)
 	BL	read		// Parameters: R0--R2
-	LDR	R0, =0x320	// R0 = x_offset
-	LDR	R1, =0x320	// R1 = y_offset
+	LDR	R0, =0x0	// R0 = x_offset
+	LDR	R1, =0x0	// R1 = y_offset
 	LSL	R0, R0, #2	// R0 = x_offset * 4 (adjust)
 	LDR	R2, LATCH+28	// R2 -> LINELENGTH
 	LDR	R2, [R2]	// R2 = LINELENGTH
