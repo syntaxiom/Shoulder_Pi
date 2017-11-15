@@ -11,13 +11,13 @@ fbp:
 
 	.text
 
-	/* R0 -> BUFFER, R1 = fbp (dereferenced), R2 = screensize */
+	/* R0 -> BUFFER + screen size, R1 = fbp + screen size, R2 = screen size */
 	.global put_screen
 put_screen:
-	LDRD	R4, [R0, #-8]!
-	STRD	R4, [R1, #-8]!
-	SUBS	R2, #8
-	BNE	put_screen
+	LDRD	R4, [R0, #-8]!	// R4,R5 = BUFFER[-8] ==> R0 = R0 - 8
+	STRD	R4, [R1, #-8]!	// fbp[-8] = color ==> R1 = R1 - 8
+	SUBS	R2, #8		// R2 -= 8 (set flags)
+	BNE	put_screen	// While R2 > 0, loop
 	MOV	PC, LR
 	
 	.global	main
@@ -73,8 +73,8 @@ main1:
 	LDR	R1, LATCH+20	// R1 -> fbp
 	LDR	R1, [R1]	// R1 = fbp (dereferenced)
 	LDR	R2, LATCH+24	// R2 = screen size
-	ADD	R0, R0, R2	// R0 -> BUFFER + screen size
-	ADD	R1, R1, R2	// R1 = fbp + screen size
+	ADD	R0, R0, R2	// R0 = *BUFFER + screensize
+	ADD	R1, R1, R2	// R1 = fbp + screensize
 	BL	put_screen	// Parameters: R0--R2
 
 main2:
