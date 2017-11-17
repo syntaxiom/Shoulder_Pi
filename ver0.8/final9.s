@@ -14,11 +14,11 @@ fbp:
 	/* R0 -> BUFFER + screen size, R1 = fbp + screen size, R2 = screen size */
 	.global put_screen
 put_screen:
-	LDRD	R4, [R0, #-8]!	// R4,R5 = BUFFER[-8] ==> R0 = R0 - 8
-	STRD	R4, [R1, #-8]!	// fbp[-8] = color ==> R1 = R1 - 8
+	LDRD	R4, [R0, #-8]!	// R4,R5 = BUFFER[-8] ==> R0 -= 8
+	STRD	R4, [R1, #-8]!	// fbp[-8] = color ==> R1 -= 8
 	SUBS	R2, #8		// R2 -= 8 ==> set flags
 	BNE	put_screen	// While R2 > 0, loop
-	MOV	PC, LR
+	MOV	PC, LR		// (Go back)
 	
 	.global	main
 main:
@@ -58,8 +58,8 @@ main:
 	LDR	R1, =SIZE	// R1 -> SIZE
 	MOV	R2, #4		// R2 = 4 (bytes to read)
 	BL	read		// Parameters: R0--R2
-	LDR	R0, =0x0	// R0 = x_offset
-	LDR	R1, =0x0	// R1 = y_offset
+	LDR	R0, =0x200	// R0 = x_offset
+	LDR	R1, =0x100	// R1 = y_offset
 	LSL	R0, R0, #2	// R0 = x_offset * 4 (adjust)
 	LDR	R2, LATCH+28	// R2 -> LINELENGTH
 	LDR	R2, [R2]	// R2 = LINELENGTH
@@ -100,6 +100,9 @@ main1:
 	ADD	R0, R0, R2	// R0 = *BUFFER + screensize
 	ADD	R1, R1, R2	// R1 = fbp + screensize
 	BL	put_screen	// Parameters: R0--R2
+	LDR	R1, =0x1
+	LDR	R0, =0x0
+	BL	sleep
 
 main2:
 	LDR	R0, LATCH+20	// R0 -> fbp
