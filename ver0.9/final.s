@@ -55,12 +55,16 @@ main:
 	LDR	R0, IMAGE	// R0 -> IMAGEFILE
 	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
 	BL	open		// Parameters: R0--R1
-	STR	R0, [SP, #8]	// SP+8 = open("/home/pi/Desktop/image1080.bin\000")
+	STR	R0, [SP, #8]	// SP+8 = open("/home/pi/Desktop/image.bin\000")
 	LDR	R1, =SIZE	// R1 -> SIZE
 	MOV	R2, #4		// R2 = 4 (bytes to read)
 	BL	read		// Parameters: R0--R2
-	LDR	R0, =0x200	// R0 = x_offset
-	LDR	R1, =0x100	// R1 = y_offset
+	LDR	R7, =0x200
+	LDR	R8, =0x100
+
+off_coord:
+	MOV	R0, R7
+	MOV	R1, R8
 	LSL	R0, R0, #2	// R0 = x_offset * 4 (adjust)
 	LDR	R2, LATCH+28	// R2 -> LINELENGTH
 	LDR	R2, [R2]	// R2 = LINELENGTH
@@ -81,15 +85,15 @@ image_loop:
 	LDRH	R1, [R0, #0]	// R1 = 2 bytes POSCOLOR+0 = x
 	LDRH	R2, [R0, #2]	// R2 = 2 bytes POSCOLOR+2 = y
 	LDR	R3, [R0, #4]	// R3 = 4 bytes POSCOLOR+4 = color
-	LDR	R0, LATCH+28	// R0 -> SCREENSIZE
-	LDR	R0, [R0]	// R0 = SCREENSIZE
+	LDR	R0, LATCH+28	// R0 -> LINELENGTH
+	LDR	R0, [R0]	// R0 = LINELENGTH
 	LSL	R1, R1, #2	// R1 = x * 4
-	MUL	R2, R2, R0	// R2 = y * SCREENSIZE
+	MUL	R2, R2, R0	// R2 = y * LINELENGTH
 	LDR	R0, [SP, #12]	// R0 = x_offset
 	ADD	R1, R1, R0	// R1 = x * 4 + x_offset
 	LDR	R0, [SP, #16]	// R0 = y_offset
-	ADD	R2, R2, R0	// R2 = y * SCREENSIZE + y_offset
-	ADD	R1, R1, R2	// R1 = x * 4 + x_offset + y * SCREENSIZE + y_offset
+	ADD	R2, R2, R0	// R2 = y * LINELENGTH + y_offset
+	ADD	R1, R1, R2	// R1 = x * 4 + x_offset + y * LINELENGTH + y_offset
 	LDR	R0, =BUFFER	// R0 -> BUFFER
 	STR	R3, [R0, R1]	// BUFFER+R1 = color
 	BAL	image_loop	// (Loop)
@@ -111,9 +115,45 @@ main1:
 	LDR	R0, LATCH+32	// R0 -> delay
 	LDR	R1, =0x0	// R1 = NULL
 	BL	nanosleep	// Parameters: R0--R1
-	LDR	R0, [SP, #20]	// R0 = times to loo
+	LDR	R0, [SP, #20]	// R0 = times to loop
 	SUBS	R0, #1		// R0 -= 1
 	BEQ	main2		// (Break)
+
+prep:	
+	LDR	R0, IMAGE	// R0 -> IMAGEFILE
+	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
+	BL	open		// Parameters: R0--R1
+	LDR	R0, [SP, #8]	// R0 = open("/home/pi/Desktop/image1080.bin\000")
+	LDR	R1, =SIZE	// R1 -> SIZE
+	MOV	R2, #4		// R2 = 4 (bytes to read)
+	BL	read		// Parameters: R0--R2
+
+anti_image:
+	LDR	R0, [SP, #8]	// R0 = open(...)
+	LDR	R1, =POSCOLOR	// R1 -> POSCOLOR
+	MOV	R2, #8		// R2 = 8 (bytes to read)
+	BL	read		// Parameters: R0--R2
+	CMP	R0, #0		// R0 ? 0 (end of file)
+	BEQ	update_coord	// (Break)
+	LDR	R0, =POSCOLOR	// R0 -> POSCOLOR
+	LDRH	R1, [R0, #0]	// R1 = 2 bytes POSCOLOR+0 = x
+	LDRH	R2, [R0, #2]	// R2 = 2 bytes POSCOLOR+2 = y
+	LDR	R3, =0x0	// R3 = 0 (null color)
+	LDR	R0, LATCH+28	// R0 -> LINELENGTH
+	LDR	R0, [R0]	// R0 = LINELENGTH
+	LSL	R1, R1, #2	// R1 = x * 4
+	MUL	R2, R2, R0	// R2 = y * LINELENGTH
+	LDR	R0, [SP, #12]	// R0 = x_offset
+	ADD	R1, R1, R0	// R1 = x * 4 + x_offset
+	LDR	R0, [SP, #16]	// R0 = y_offset
+	ADD	R2, R2, R0	// R2 = y * LINELENGTH + y_offset
+	ADD	R1, R1, R2	// R1 = x * 4 + x_offset + y * LINELENGTH + y_offset
+	LDR	R0, =BUFFER	// R0 -> BUFFER
+	STR	R3, [R0, R1]	// BUFFER+R1 = color
+	BAL	anti_image	// (Loop)
+
+update_coord:
+	NOP
 
 main2:
 	LDR	R0, LATCH+20	// R0 -> fbp
@@ -143,6 +183,7 @@ LATCH:
 	.word	delay
 IMAGE:
 	.word	IMAGEFILE
+	.word	0
 
 	.data
 BUFFER:
