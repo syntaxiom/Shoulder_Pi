@@ -8,6 +8,7 @@ fbp:
 	
 	.comm	vinfo,160,4
 	.comm	finfo,68,4
+	.comm	delay,8,4
 
 	.text
 
@@ -54,7 +55,7 @@ main:
 	LDR	R0, =0x1	// R0 = 1 (mod 2 tracker)
 	STR	R0, [SP, #20]	// SP+20 = tracker
 
-get_image:	
+get_image:
 	LDR	R0, IMAGE	// R0 -> IMAGEFILE
 	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
 	BL	open		// Parameters: R0--R1
@@ -100,6 +101,9 @@ image_loop:
 	BAL	image_loop	// (Loop)
 
 main1:
+	LDR	R0, [SP, #20]	// R0 = tracker
+	CMP	R0, #0		// tracker ? 0
+	BEQ	reset		// (Don't print)
 	LDR	R0, =BUFFER	// R0 -> BUFFER
 	LDR	R1, LATCH+20	// R1 -> fbp
 	LDR	R1, [R1]	// R1 = fbp (dereferenced)
@@ -110,16 +114,33 @@ main1:
 	BL	put_screen	// Parameters: R0--R2
 
 reset:
+	LDR	R0, LATCH+32	// R0 -> delay
+	LDR	R1, =0x1312D00	// R1 = nanoseconds
+	LDR	R2, =0x0	// R2 = seconds
+	STR	R2, [R0, #0]	// delay.sec = seconds
+	STR	R1, [R0, #4]	// delay.nsec = nanoseconds
+	BL	nanosleep	// Parameters: R0--R1
 	LDR	R0, [SP, #8]	// R0 = open("/home/pi/Desktop/image.bin\000")
 	BL	close		// Parameters: R0
 	LDR	R0, [SP, #20]	// R0 = tracker
-	CMP	R0, #0x0	// tracker ? 0
-	ADDEQ	R0, #1		// R0 += 1
-	SUBNE	R0, #1		// R0 -= 1
+	CMP	R0, #1		// tracker ? 1
+	SUBEQ	R0, #1		// R0 -= 1
+	STREQ	R0, [SP, #20]	// SP+20 = tracker (updated)
+	BEQ	go_again
+	ADD	R0, #1		// R0 += 1
 	STR	R0, [SP, #20]	// SP+20 = tracker (updated)
-	LDR	R0, =0x1	// R0 = sleep time
-	BL	sleep		// Parameters: R0
-	BAL	get_image
+
+adjust:	
+	LDR	R0, IMAGE+4	// R0 -> COORDS
+	LDRH	R1, [R0, #2]	// R1 = x_offset
+	LDRH	R2, [R0, #0]	// R2 = y_offset
+	ADD	R1, #10		// x_offset += x_move
+	ADD	R2, #0		// y_offset += y_move
+	STRH	R2, [R0, #0]	// COORDS+0 = y_offset (updated)
+	STRH	R1, [R0, #2]	// COORDS+2 = x_offset (updated)
+	
+go_again:	
+	BAL	get_image	// (Loop)
 
 main2:
 	LDR	R0, LATCH+20	// R0 -> fbp
@@ -146,6 +167,7 @@ LATCH:
 	.word	fbp
 	.word	SCREENSIZE
 	.word	LINELENGTH
+	.word	delay
 IMAGE:
 	.word	IMAGEFILE
 	.word	COORDS
