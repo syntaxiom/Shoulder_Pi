@@ -115,7 +115,7 @@ main1:
 
 reset:
 	LDR	R0, LATCH+32	// R0 -> delay
-	LDR	R1, =0x1312D00	// R1 = nanoseconds
+	LDR	R1, =0x5	// R1 = nanoseconds
 	LDR	R2, =0x0	// R2 = seconds
 	STR	R2, [R0, #0]	// delay.sec = seconds
 	STR	R1, [R0, #4]	// delay.nsec = nanoseconds
