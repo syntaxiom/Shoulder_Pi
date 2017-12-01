@@ -20,6 +20,25 @@ put_screen:
 	SUBS	R2, #8		// R2 -= 8 ==> set flags
 	BNE	put_screen	// While R2 > 0, loop
 	MOV	PC, LR		// (Go back)
+
+/*
+	LDRD	R4, [R0, #-8]
+	ADD	R0, R0, #-8
+	STRD	R4, [R1, #-8]
+	ADD	R1, R1, #-8
+	SUBS	R2, #8
+	BNE	put_screen
+	MOV	PC, LR		*/
+
+/*
+	// r0 -> buffer
+	// r1 -> fbp
+	// r2 = screen size
+	LDM	r0!, {r3-r10}
+	STM	r1!, {r3-r10}
+	SUBS   	r2, #32
+	BNE	put_screen
+	MOV	PC, LR		*/
 	
 	.global	main
 main:
