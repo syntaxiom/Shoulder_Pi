@@ -92,8 +92,23 @@ setup_image:
 	LDR	R3, =COORDS+4	// R3 = y
 	MUL	R3, R3, R1	// R3 = y * LINELENGTH
 	ADD	R2, R2, R3	// $ R2 = x + (y * LINELENGTH) (offset)
-	LDR	R3, =SIZE	// R3 -> SIZE
-	LDR	R3, [R4]	// $ R3 = SIZE (loop counter)
+	LDR	R3, =POSCOLOR	// $ R3 -> POSCOLOR
+	LDR	R4, =SIZE	// R4 -> SIZE
+	LDR	R4, [R4]	// $ R4 = SIZE (loop counter)
+
+image_loop:
+	SUBS	R4, #8		// Decrement loop counter and set flags
+	BMI	done		// (Break)
+	LDRD	R6, [FP, -R4]	// R6,R7 = pos,color
+	STRD	R6, [R3]	// POSCOLOR = pos,color
+	LDRH	R5, [R3, #0]	// R5 = x
+	LDRH	R6, [R3, #2]	// R6 = y
+	MUL	R6, R6, R1	// R6 = y * LINELENGTH
+	ADD	R6, R5, R6	// R6 = x + (y * LINELENGTH)
+	ADD	R6, R2, R6	// R6 = offset + (x + (y * LINELENGTH))
+	LDR	R7, [R3, #4]	// R7 = color
+	STR	R7, [R0, R6]	// BUFFER+offset = color
+	BAL	image_loop	// (Loop)
 
 done:
 	LDR	R0, =SIZE	// R0 -> SIZE
@@ -146,3 +161,6 @@ FRAMEBUFFER:
 	.ascii	"/dev/fb0\000"
 IMAGEFILE:
 	.ascii	"/home/pi/Desktop/image.bin\000"
+
+/* NOTES
+	*/
