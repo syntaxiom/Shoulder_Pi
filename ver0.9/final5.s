@@ -17,9 +17,6 @@ fbp:
 	/* R0 = *BUFFER, R1 = fbp, R2 = screen size (loop counter) */
 	.global put_screen
 put_screen:
-	//LDRD	R4, [R0, #-8]!	// R4,R5 = BUFFER[-8] ==> R0 -= 8
-	//STRD	R4, [R1, #-8]!	// fbp[-8] = color ==> R1 -= 8
-	//SUBS	R2, #8		// R2 -= 8 ==> set flags
 	VLD1.32 {Q0,Q1}, [R0]!	// Q0 = BUFFER[0--3]!
 	VST1.32 {Q0,Q1}, [R1]!	// fbp[0--3]! = Q0
 	SUBS	R2, #32		// R2 -= 32 ==> set flags
@@ -97,15 +94,34 @@ set_stack:
 	STR	R4, [R0]	// STACKSIZE = R4
 	MOV	FP, SP		// Set dynamic link
 
-prep:
-	LDR	R0, =STACKSIZE	// R0 -> STACKSIZE
-	LDR	R0, [R0]	// R0 = STACKSIZE
-	LDR	R1, =DELTA	// R1 -> DELTA
+adj_coords:
+	LDR	R0, =DELTA	// R0 -> DELTA
+	LDR	R1, =LINELENGTH	// R1 -> LINELENGTH
+	LDR	R1, [R1]	// R1 = LINELENGTH
+	LDRD	R2, [R0]	// R2,R3 = dx,dy
+	LSL	R2, R2, #2	// R2 = dx * 4
+	MUL	R3, R3, R1	// R3 = dy * LINELENGTH
+	ADD	R2, R2, R3	// R2 = (dx * 4) + (dy * LINELENGTH) (dOffset)
+	LDR	R0, =OFFSET	// R0 -> OFFSET
+	STR	R2, [R0]	// OFFSET = R2
 
-big_loop:
+prep_stack:
+	LDR	R0, =STACKSIZE	// R0 -> STACKSIZE
+	LDR	R0, [R0]	// @ R0 = STACKSIZE
+	LDR	R1, =OFFSET	// R1 -> OFFSET
+	LDR	R1, [r1]	// @ R1 = OFFSET
+	LDR	R2, =BUFFER	// @ R2 -> BUFFER
+	LDR	R3, =0		// @ R3 = 0
+
+stack_loop:
 	SUBS	R0, #8		// R0 -= 8
 	BMI	set_screen	// (Break)
-	LDRD	R2, [FP, R0]	// R2,R3 = pos,color
+	LDRD	R4, [FP, R0]	// R4,R5 = offset,color
+	STR	R3, [R2, R4]	// BUFFER[offset] = 0
+	ADD	R4, R4, R1	// R4 = offset + OFFSET
+	STRD	R4, [FP, R0]	// offset,color = R4,R5
+	STR	R5, [R2, R4]	// BUFFER[offset] = color
+	BAL	stack_loop	// (Loop)
 	
 set_screen:
 	LDR	R0, =BUFFER	// R0 -> BUFFER
@@ -152,7 +168,9 @@ POS:
 	.word	200
 	.word	100
 DELTA:
-	.word	10
+	.word	256
+	.word	0
+OFFSET:
 	.word	0
 	
 FRAMEBUF:
