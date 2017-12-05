@@ -130,6 +130,7 @@ set_screen:
 	LDR	R2, =SCREENSIZE	// R2 -> SCREENSIZE
 	LDR	R2, [R2]	// R2 = SCREENSIZE
 	BL	put_screen	// Parameters: R0--R2
+	BAL	adj_coords	// (LOOP)
 
 done:
 	LDR	R0, =fbp	// R0 -> fbp
@@ -168,7 +169,7 @@ POS:
 	.word	200
 	.word	100
 DELTA:
-	.word	256
+	.word	10
 	.word	0
 OFFSET:
 	.word	0
