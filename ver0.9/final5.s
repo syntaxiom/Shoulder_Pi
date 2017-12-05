@@ -28,6 +28,7 @@ put_screen:
 	
 	.global	main
 main:
+	BL	wiringPiSetup	// Setup wiringPi
 	LDR	R0, =FRAMEBUF	// R0 -> FRAMEBUF
 	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
 	BL	open		// Parameters: R0--R1
@@ -96,6 +97,16 @@ set_stack:
 	STR	R4, [R0]	// STACKSIZE = R4
 	MOV	FP, SP		// Set dynamic link
 
+prep:
+	LDR	R0, =STACKSIZE	// R0 -> STACKSIZE
+	LDR	R0, [R0]	// R0 = STACKSIZE
+	LDR	R1, =DELTA	// R1 -> DELTA
+
+big_loop:
+	SUBS	R0, #8		// R0 -= 8
+	BMI	set_screen	// (Break)
+	LDRD	R2, [FP, R0]	// R2,R3 = pos,color
+	
 set_screen:
 	LDR	R0, =BUFFER	// R0 -> BUFFER
 	LDR	R1, =fbp	// R1 -> fbp
@@ -137,10 +148,12 @@ LINELENGTH:
 	.word	0
 STACKSIZE:
 	.word	0
-XPOS:
+POS:
 	.word	200
-YPOS:
 	.word	100
+DELTA:
+	.word	10
+	.word	0
 	
 FRAMEBUF:
 	.ascii	"/dev/fb0\000"
