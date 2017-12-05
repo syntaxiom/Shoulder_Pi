@@ -1,3 +1,5 @@
+	.text
+	
 	.equ INPUT,	0
 	.equ OUTPUT,	1
 	.equ LOW,	0
@@ -7,8 +9,6 @@
 	.equ LED1,	0
 	.equ BUTTON1,	1
 	.equ BUTTON2,	2
-	
-	.text
 
 	.global main
 main:
