@@ -115,13 +115,25 @@ prep_stack:
 
 stack_loop:
 	SUBS	R0, #8		// R0 -= 8
-	BMI	set_screen	// (Break)
+	BMI	prep_buffer	// (Break)
 	LDRD	R4, [FP, R0]	// R4,R5 = offset,color
 	STR	R3, [R2, R4]	// BUFFER[offset] = 0
 	ADD	R4, R4, R1	// R4 = offset + OFFSET
 	STRD	R4, [FP, R0]	// offset,color = R4,R5
 	STR	R5, [R2, R4]	// BUFFER[offset] = color
 	BAL	stack_loop	// (Loop)
+
+prep_buffer:
+	LDR	R0, =STACKSIZE	// R0 -> STACKSIZE
+	LDR	R0, [R0]	// @ R0 = STACKSIZE
+	LDR	R1, =BUFFER	// @ R1 = BUFFER
+
+buffer_loop:
+	SUBS	R0, #8		// R0 -= 8
+	BMI	set_screen	// (Break)
+	LDRD	R2, [FP, R0]	// R2,R3 = offset,color
+	STR	R3, [R1, R2]	// BUFFER[offset] = color
+	BAL	buffer_loop	// (Loop)
 	
 set_screen:
 	LDR	R0, =BUFFER	// R0 -> BUFFER
