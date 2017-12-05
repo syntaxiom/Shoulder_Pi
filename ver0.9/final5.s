@@ -14,12 +14,15 @@ fbp:
 
 	.text
 
-	/* R0 = *BUFFER + screen size, R1 = fbp + screen size, R2 = screen size (loop counter) */
+	/* R0 = *BUFFER, R1 = fbp, R2 = screen size (loop counter) */
 	.global put_screen
 put_screen:
-	LDRD	R4, [R0, #-8]!	// R4,R5 = BUFFER[-8] ==> R0 -= 8
-	STRD	R4, [R1, #-8]!	// fbp[-8] = color ==> R1 -= 8
-	SUBS	R2, #8		// R2 -= 8 ==> set flags
+	//LDRD	R4, [R0, #-8]!	// R4,R5 = BUFFER[-8] ==> R0 -= 8
+	//STRD	R4, [R1, #-8]!	// fbp[-8] = color ==> R1 -= 8
+	//SUBS	R2, #8		// R2 -= 8 ==> set flags
+	VLD1.32 {Q0,Q1}, [R0]!	// Q0 = BUFFER[0--3]!
+	VST1.32 {Q0,Q1}, [R1]!	// fbp[0--3]! = Q0
+	SUBS	R2, #32		// R2 -= 32 ==> set flags
 	BNE	put_screen	// While R2 > 0, loop
 	MOV	PC, LR		// (Go back)
 	
@@ -99,8 +102,6 @@ set_screen:
 	LDR	R1, [R1]	// R1 = fbp
 	LDR	R2, =SCREENSIZE	// R2 -> SCREENSIZE
 	LDR	R2, [R2]	// R2 = SCREENSIZE
-	ADD	R1, R1, R2	// R1 = fbp + SCREENSIZE
-	ADD	R0, R0, R2	// R0 = *BUFFER + SCREENSIZE
 	BL	put_screen	// Parameters: R0--R2
 
 done:
