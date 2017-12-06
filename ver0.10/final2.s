@@ -14,6 +14,9 @@ fbp:
 
 	.text
 
+	.equ FPS_MICROS, 16667
+	.equ FLOOR, 700
+
 	/* R0 = *BUFFER, R1 = fbp, R2 = screen size (loop counter) */
 	.global put_screen
 put_screen:
@@ -33,10 +36,6 @@ main:
 	STR	R0, [SP]	// SP = open("/dev/fb0\000")
 	LDR	R1, =17920	// R1 = 17920 (Opcode for FBIOGET_VSCREENINFO)
 	LDR	R2, =vinfo	// R2 -> vinfo
-	BL	ioctl		// Parameters: R0--R2
-	LDR	R0, [SP]	// R0 = open("/dev/fb0\000")
-	LDR	R1, =17922	// R1 = 17922 (Opcode for FBIOGET_FSCREENINFO)
-	LDR	R2, =finfo	// R2 -> finfo
 	BL	ioctl		// Parameters: R0--R2
 	LDR	R0, =vinfo	// R0 -> vinfo
 	LDR	R1, [R0, #0]	// R1 = vinfo.xres
@@ -117,9 +116,15 @@ coords_loop:
 
 end_coords:
 	LDR	R0, =DELTA	// R0 -> DELTA
-	LDR	R2, =10		// R2 = dx
+	LDR	R1, =POS	// R1 -> POS
+	LDRD	R2, [R0]	// R2,R3 = dx,dy
+	STRD	R2, [R1]	// POS = dx,dy
+	LDR	R2, =0		// R2 = dx
 	LDR	R3, =0		// R3 = dy
 	STRD	R2, [R0]	// DELTA = dx,dy
+
+big_loop:
+	NOP
 
 adj_coords:
 	LDR	R0, =DELTA	// R0 -> DELTA
@@ -169,7 +174,9 @@ set_screen:
 	LDR	R2, =SCREENSIZE	// R2 -> SCREENSIZE
 	LDR	R2, [R2]	// R2 = SCREENSIZE
 	BL	put_screen	// Parameters: R0--R2
-	BAL	adj_coords	// (LOOP)
+
+big_reset:	
+	BAL	big_loop	// (LOOP)
 
 done:
 	LDR	R0, =fbp	// R0 -> fbp
@@ -208,7 +215,10 @@ STACKSIZE:
 	.word	0
 DELTA:
 	.word	200
-	.word	100
+	.word	FLOOR
+POS:
+	.word	0
+	.word	0
 OFFSET:
 	.word	0
 	
