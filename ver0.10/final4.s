@@ -87,7 +87,9 @@ coll_loop:
 	LSL	R6, R6, #2	// R6 = COLLPOS.x * 4 (coll_xset)
 	ADD	R1, R1, R6	// R1 = xset + coll_xset
 	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
+	LDR	R0, =COLLISION	// R0 -> COLLISION
 	STR	R3, [R4, R1]	// BUFFER[offset] = color
+	STR	R3, [R0, R1]	// COLLISION[offset] = color
 	BAL	coll_loop	// (Loop)
 
 open_image:
@@ -160,6 +162,42 @@ init_delta:
 	STRD	R2, [R0]	// DELTA = dx,dy
 
 big_loop:
+	NOP
+
+prep_check:
+	LDR	R0, =DELTA	// R0 -> DELTA
+	LDR	R1, [R0, #0]	// @ R1 = dx
+	LDR	R2, [R0, #4]	// @ R2 = dy
+	LDR	R0, =IMG_DIMS	// R0 -> IMG_DIMES
+	LDR	R3, [R0, #0]	// @ R3 = width
+	LDR	R4, [R0, #4]	// @ R4 = height
+	LDR	R0, =POS	// R0 -> POS
+	LDR	R5, [R0, #0]	// @ R5 = x
+	LDR	R6, [R0, #4] 	// @ R6 = y
+	LDR	R7, =COLLISION	// @ R7 -> COLLISION
+
+check_dx:
+	CMP	R1, #0		// dx ? 0
+	BEQ	check_dy	// dx == 0
+	BGT	right_loop	// dx > 0
+	BLT	left_loop	// dx < 0
+
+right_loop:
+	NOP
+
+left_loop:
+	NOP
+
+check_dy:
+	CMP	R2, #0		// dy ? 0
+	BEQ	adj_coords	// dy == 0
+	BLT	up_loop		// dy < 0
+	BGT	down_loop	// dy > 0
+
+up_loop:
+	NOP
+
+down_loop:
 	NOP
 
 adj_coords:
@@ -249,7 +287,7 @@ done:
 	.bss
 BUFFER:
 	.skip	0x7E9000
-BACKGROUND:
+COLLISION:
 	.skip	0x7E9000
 
 	.data
@@ -284,6 +322,9 @@ OFFSET:
 COLLPOS:
 	.word	400
 	.word	400
+IMG_DIMS:
+	.word	256
+	.word	256
 	
 FRAMEBUF:
 	.ascii	"/dev/fb0\000"
