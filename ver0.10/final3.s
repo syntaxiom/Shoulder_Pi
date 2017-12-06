@@ -10,11 +10,9 @@ fbp:
 	
 	.comm	vinfo,160,4
 	.comm	finfo,68,4
-	.comm	delay,8,4
 
 	.text
 
-	.equ FPS_MICROS, 16667
 	.equ FLOOR, 700
 	.EQU ACCEL, 0
 	.equ GRAVITY, 1
@@ -194,6 +192,8 @@ big_reset:
 	LDR	R1, [R0, #4]	// R1 = dy
 	ADD	R1, #GRAVITY	// dy += GRAVITY
 	STR	R1, [R0, #4]	// DELTA+4 = new dy
+	LDR	R0, =14400	// R0 = microseconds
+	BL	delayMicroseconds	// Parameters: R0
 	BAL	big_loop	// (LOOP)
 
 done:
@@ -217,6 +217,10 @@ BACKGROUND:
 	.skip	0x7E9000
 
 	.data
+SAVE_TIME:
+	.word	0
+FPS_MICROS:
+	.word	16667
 FB_FILED:
 	.word	0
 IMG_FILED:
