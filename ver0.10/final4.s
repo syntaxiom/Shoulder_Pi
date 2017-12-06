@@ -56,6 +56,40 @@ main:
 	LDR	R1, =fbp	// R1 -> fbp
 	STR	R0, [R1]	// fbp = mmap(...)
 
+open_coll:
+	LDR	R0, =COLLFILE	// R0 -> COLLFILE
+	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
+	BL	open		// Parameters: R0--R1
+	LDR	R1, =COLL_FILED	// R1 -> COLL_FILED
+	STR	R0, [R1]	// COLL_FILED = open("/home/pi/Desktop/image.bin\000")
+
+coll_loop:
+	LDR	R0, =COLL_FILED	// R0 -> COLL_FILED
+	LDR	R0, [R0]	// R0 = COLL_FILED
+	LDR	R1, =POSCOLOR	// R1 -> POSCOLOR
+	MOV	R2, #12		// R2 = 12 (bytes to read)
+	BL	read		// Parameters: R0--R2
+	CMP	R0, #0		// R0 ? 0
+	BEQ	open_image	// (Break)
+	LDR	R0, =POSCOLOR	// R0 -> POSCOLOR
+	LDR	R1, [R0, #0]	// R1 = x
+	LDR	R2, [R0, #4]	// R2 = y
+	LDR	R3, [R0, #8]	// R3 = color
+	LDR	R4, =BUFFER	// R4 -> BUFFER
+	LDR	R5, =COLLPOS	// R5 = COLLPOS
+	LDRD	R6, [R5]	// R6,R7 = COLLPOS.x,COLLPOS.y
+	LDR	R0, =LINELENGTH	// R0 -> LINELENGTH
+	LDR	R0, [R0]	// R0 = LINELENGTH
+	MUL	R2, R2, R0	// R2 = y * LINELENGTH (yset)
+	MUL	R7, R7, R0	// R6 = COLLPOS.y * LINELENGTH (coll_yset)
+	ADD	R2, R2, R7	// R2 = yset + coll_yset
+	LSL	R1, R1, #2	// R1 = x * 4 (xset)
+	LSL	R6, R6, #2	// R6 = COLLPOS.x * 4 (coll_xset)
+	ADD	R1, R1, R6	// R1 = xset + coll_xset
+	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
+	STR	R3, [R4, R1]	// BUFFER[offset] = color
+	BAL	coll_loop	// (Loop)
+
 open_image:
 	LDR	R0, =IMAGEFILE	// R0 -> IMAGEFILE
 	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
@@ -81,7 +115,6 @@ image_loop:
 	MUL	R2, R2, R0	// R2 = y * LINELENGTH
 	LSL	R1, R1, #2	// R1 = x * 4
 	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
-	LDR	R0, =BUFFER	// R0 -> BUFFER
 	PUSH	{R1, R3}	// Push {offset, color}
 	ADD	R4, #8		// R4 += 8
 	BAL	image_loop	// (Loop)
@@ -192,7 +225,7 @@ big_reset:
 	LDR	R1, [R0, #4]	// R1 = dy
 	ADD	R1, #GRAVITY	// dy += GRAVITY
 	STR	R1, [R0, #4]	// DELTA+4 = new dy
-	LDR	R0, =14400	// R0 = microseconds
+	LDR	R0, =12400	// R0 = microseconds
 	BL	delayMicroseconds	// Parameters: R0
 	BAL	big_loop	// (LOOP)
 
@@ -206,6 +239,9 @@ done:
 	BL	close		// Parameters: R0
 	LDR	R0, =IMG_FILED	// R0 -> IMG_FILED
 	LDR	R0, [R0]	// R0 = IMG_FILED
+	BL	close		// Parameters: R0
+	LDR	R0, =COLL_FILED	// R0 -> COLL_FILED
+	LDR	R0, [R0]	// R0 = COLL_FILED
 	BL	close		// Parameters: R0
 	MOV	R0, #0		// R0 = 0 (return code)
 	BLAL	exit		// Terminate the program
@@ -225,6 +261,8 @@ FB_FILED:
 	.word	0
 IMG_FILED:
 	.word	0
+COLL_FILED:
+	.word	0
 POSCOLOR:
 	.skip	12
 SIZE:
@@ -243,11 +281,16 @@ POS:
 	.word	0
 OFFSET:
 	.word	0
+COLLPOS:
+	.word	400
+	.word	400
 	
 FRAMEBUF:
 	.ascii	"/dev/fb0\000"
 IMAGEFILE:
 	.ascii	"/home/pi/Desktop/image.bin\000"
+COLLFILE:
+	.ascii	"/home/pi/Desktop/collider.bin\000"
 
 /* NOTES
 	*/
