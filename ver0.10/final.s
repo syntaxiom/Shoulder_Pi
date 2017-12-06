@@ -17,9 +17,11 @@ fbp:
 	/* R0 = *BUFFER, R1 = fbp, R2 = screen size (loop counter) */
 	.global put_screen
 put_screen:
-	VLD1.32 {Q0,Q1}, [R0]!	// Q0--Q1 = BUFFER[0--7]!
-	VST1.32 {Q0,Q1}, [R1]!	// fbp[0--7]! = Q0--Q1
-	SUBS	R2, #32		// R2 -= 32 ==> set flags
+	//VLD1.32 {Q0,Q1}, [R0]!	// Q0--Q1 = BUFFER[0--7]!
+	//VST1.32 {Q0,Q1}, [R1]!	// fbp[0--7]! = Q0--Q1
+	VLDM	R0!, {Q0-Q3}	// Q0--Q3 = BUFFER[0--15]!
+	VSTM	R1!, {Q0-Q3}	// fbp[0--15]! = Q0--Q3
+	SUBS	R2, #64		// R2 -= 64 ==> set flags
 	BNE	put_screen	// While R2 > 0, loop
 	MOV	PC, LR		// (Go back)
 	
