@@ -17,8 +17,6 @@ fbp:
 	/* R0 = *BUFFER, R1 = fbp, R2 = screen size (loop counter) */
 	.global put_screen
 put_screen:
-	//VLD1.32 {Q0,Q1}, [R0]!	// Q0--Q1 = BUFFER[0--7]!
-	//VST1.32 {Q0,Q1}, [R1]!	// fbp[0--7]! = Q0--Q1
 	VLDM	R0!, {Q0-Q3}	// Q0--Q3 = BUFFER[0--15]!
 	VSTM	R1!, {Q0-Q3}	// fbp[0--15]! = Q0--Q3
 	SUBS	R2, #64		// R2 -= 64 ==> set flags
@@ -85,7 +83,6 @@ image_loop:
 	LSL	R1, R1, #2	// R1 = x * 4
 	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
 	LDR	R0, =BUFFER	// R0 -> BUFFER
-	STR	R3, [R0, R1]	// BUFFER[offset] = color
 	PUSH	{R1, R3}	// Push {offset, color}
 	ADD	R4, #8		// R4 += 8
 	BAL	image_loop	// (Loop)
@@ -94,6 +91,35 @@ set_stack:
 	LDR	R0, =STACKSIZE	// R0 -> STACKSIZE
 	STR	R4, [R0]	// STACKSIZE = R4
 	MOV	FP, SP		// Set dynamic link
+
+start_coords:
+	LDR	R0, =DELTA	// R0 -> DELTA
+	LDR	R1, =LINELENGTH	// R1 -> LINELENGTH
+	LDR	R1, [R1]	// R1 = LINELENGTH
+	LDRD	R2, [R0]	// R2,R3 = dx,dy
+	LSL	R2, R2, #2	// R2 = dx * 4
+	MUL	R3, R3, R1	// R3 = dy * LINELENGTH
+	ADD	R2, R2, R3	// R2 = (dx * 4) + (dy * LINELENGTH) (dOffset)
+	LDR	R0, =OFFSET	// R0 -> OFFSET
+	STR	R2, [R0]	// OFFSET = R2
+	LDR	R0, =STACKSIZE	// R0 -> STACKSIZE
+	LDR	R0, [R0]	// @ R0 = STACKSIZE
+	LDR	R1, =OFFSET	// R1 -> OFFSET
+	LDR	R1, [r1]	// @ R1 = OFFSET
+	
+coords_loop:
+	SUBS	R0, #8		// R0 -= 8
+	BMI	end_coords	// (Break)
+	LDR	R2, [FP, R0]	// R2 = offset
+	ADD	R2, R2, R1	// R2 = offset + OFFSET
+	STR	R2, [FP, R0]	// offset = R2
+	BAL	coords_loop	// (Loop)
+
+end_coords:
+	LDR	R0, =DELTA	// R0 -> DELTA
+	LDR	R2, =10		// R2 = dx
+	LDR	R3, =0		// R3 = dy
+	STRD	R2, [R0]	// DELTA = dx,dy
 
 adj_coords:
 	LDR	R0, =DELTA	// R0 -> DELTA
@@ -162,6 +188,8 @@ done:
 	.bss
 BUFFER:
 	.skip	0x7E9000
+BACKGROUND:
+	.skip	0x7E9000
 
 	.data
 FB_FILED:
@@ -178,12 +206,9 @@ LINELENGTH:
 	.word	0
 STACKSIZE:
 	.word	0
-POS:
+DELTA:
 	.word	200
 	.word	100
-DELTA:
-	.word	10
-	.word	0
 OFFSET:
 	.word	0
 	
