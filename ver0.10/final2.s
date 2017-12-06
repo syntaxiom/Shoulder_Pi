@@ -16,6 +16,8 @@ fbp:
 
 	.equ FPS_MICROS, 16667
 	.equ FLOOR, 700
+	.EQU ACCEL, 0
+	.equ GRAVITY, 1
 
 	/* R0 = *BUFFER, R1 = fbp, R2 = screen size (loop counter) */
 	.global put_screen
@@ -119,8 +121,10 @@ end_coords:
 	LDR	R1, =POS	// R1 -> POS
 	LDRD	R2, [R0]	// R2,R3 = dx,dy
 	STRD	R2, [R1]	// POS = dx,dy
-	LDR	R2, =0		// R2 = dx
-	LDR	R3, =0		// R3 = dy
+
+init_delta:	
+	LDR	R2, =20		// R2 = dx
+	LDR	R3, =-20	// R3 = dy
 	STRD	R2, [R0]	// DELTA = dx,dy
 
 big_loop:
@@ -131,6 +135,11 @@ adj_coords:
 	LDR	R1, =LINELENGTH	// R1 -> LINELENGTH
 	LDR	R1, [R1]	// R1 = LINELENGTH
 	LDRD	R2, [R0]	// R2,R3 = dx,dy
+	LDR	R0, =POS	// R0 -> POS
+	LDRD	R4, [R0]	// R4,R5 = x,y
+	ADD	R4, R2		// R4 = x + dx
+	ADD	R5, R3		// R5 = y + dy
+	STRD	R4, [R0]	// POS = new x,y
 	LSL	R2, R2, #2	// R2 = dx * 4
 	MUL	R3, R3, R1	// R3 = dy * LINELENGTH
 	ADD	R2, R2, R3	// R2 = (dx * 4) + (dy * LINELENGTH) (dOffset)
@@ -175,7 +184,15 @@ set_screen:
 	LDR	R2, [R2]	// R2 = SCREENSIZE
 	BL	put_screen	// Parameters: R0--R2
 
-big_reset:	
+big_reset:
+	LDR	R0, =POS	// R0 -> POS
+	LDR	R1, [R0, #4]	// R1 = POS.y
+	CMP	R1, #FLOOR	// POS.y ? FLOOR
+	BGE	done		// (Break)
+	LDR	R0, =DELTA	// R0 -> DELTA
+	LDR	R1, [R0, #4]	// R1 = dy
+	ADD	R1, #GRAVITY	// dy += GRAVITY
+	STR	R1, [R0, #4]	// DELTA+4 = new dy
 	BAL	big_loop	// (LOOP)
 
 done:
