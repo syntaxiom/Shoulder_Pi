@@ -12,6 +12,7 @@ fbp:
 	.comm	finfo,68,4
 	.comm	t_start,8,4
 	.comm	t_end,8,4
+	.comm	t_save,8,4
 
 	.text
 
@@ -167,9 +168,6 @@ init_delta:
 /* LOOP STARTS HERE */
 
 big_loop:
-	LDR	R0, =2		// R0 = 2 (Opcode for CLOCK_MONOTONIC)
-	LDR	R1, =t_start	// R1 -> t_start
-	BL	clock_gettime	// Parameters: R0--R1
 	LDR	R0, =POS	// R0 -> POS
 	LDR	R1, [R0, #4]	// R1 = POS.y
 	CMP	R1, #FLOOR	// POS.y ? FLOOR
@@ -256,10 +254,15 @@ prep_buffer:
 
 buffer_loop:
 	SUBS	R0, #8		// R0 -= 8
-	BMI	set_screen	// (Break)
+	BMI	prep_screen	// (Break)
 	LDRD	R2, [FP, R0]	// R2,R3 = offset,color
 	STR	R3, [R1, R2]	// BUFFER[offset] = color
 	BAL	buffer_loop	// (Loop)
+
+prep_screen:
+	LDR	R0, =2		// R0 = 2 (Opcode for CLOCK_MONOTONIC)
+	LDR	R1, =t_start	// R1 -> t_start
+	BL	clock_gettime	// Parameters: R0--R1
 	
 set_screen:
 	LDR	R0, =BUFFER	// R0 -> BUFFER
@@ -280,8 +283,11 @@ wait_here:
 	SUB	R0, R0, R1	// R0 = elapsed
 	LDR	R2, =FPS_NANOS	// R2 -> FPS_NANOS
 	LDR	R2, [R2]	// R2 = FPS_NANOS
-	SUB	R0, R2, R0	// R2 = FPS_NANOS - elapsed
-	BL	nanosleep	// Parameters: R0
+	SUB	R1, R2, R0	// R1 = FPS_NANOS - elapsed
+	LDR	R0, =t_save	// R0 -> t_save
+	STR	R1, [R0, #4]	// t_save.nsec = R1
+	LDR	R1, =0		// R1 = 0
+	BL	nanosleep	// Parameters: R0--R1
 
 big_reset:
 	BAL	big_loop	// (LOOP)
