@@ -168,6 +168,9 @@ init_delta:
 /* LOOP STARTS HERE */
 
 big_loop:
+	LDR	R0, =2		// R0 = 2 (Opcode for CLOCK_MONOTONIC)
+	LDR	R1, =t_start	// R1 -> t_start
+	BL	clock_gettime	// Parameters: R0--R1
 	LDR	R0, =POS	// R0 -> POS
 	LDR	R1, [R0, #4]	// R1 = POS.y
 	CMP	R1, #FLOOR	// POS.y ? FLOOR
@@ -254,15 +257,10 @@ prep_buffer:
 
 buffer_loop:
 	SUBS	R0, #8		// R0 -= 8
-	BMI	prep_screen	// (Break)
+	BMI	set_screen	// (Break)
 	LDRD	R2, [FP, R0]	// R2,R3 = offset,color
 	STR	R3, [R1, R2]	// BUFFER[offset] = color
 	BAL	buffer_loop	// (Loop)
-
-prep_screen:
-	LDR	R0, =2		// R0 = 2 (Opcode for CLOCK_MONOTONIC)
-	LDR	R1, =t_start	// R1 -> t_start
-	BL	clock_gettime	// Parameters: R0--R1
 	
 set_screen:
 	LDR	R0, =BUFFER	// R0 -> BUFFER
@@ -321,7 +319,7 @@ SAVE_TIME:
 FPS_MICROS:
 	.word	16725
 FPS_NANOS:
-	.word	16666666
+	.word	16666660
 FB_FILED:
 	.word	0
 IMG_FILED:
