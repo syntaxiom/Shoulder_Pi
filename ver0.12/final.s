@@ -60,6 +60,8 @@ main:
 	LDR	R1, =fbp	// R1 -> fbp
 	STR	R0, [R1]	// fbp = mmap(...)
 
+	//Get up symbol
+	
 prep_up_sym:
 	LDR	R0, =UP_IMG	// R0 -> UP_IMG
 	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
@@ -94,6 +96,8 @@ end_up_sym:
 	STR	R4, [R0, #0]	// size = R4
 	STR	SP, [R0, #4]	// location = SP
 
+	// Get down symbol
+	
 prep_down_sym:
 	LDR	R0, =DOWN_IMG	// R0 -> DOWN_IMG
 	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
@@ -128,35 +132,124 @@ end_down_sym:
 	STR	R4, [R0, #0]	// size = R4
 	STR	SP, [R0, #4]	// location = SP
 
+	// Get left symbol
+
+prep_left_sym:
+	LDR	R0, =LEFT_IMG	// R0 -> LEFT_IMG
+	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
+	BL	open		// Parameters: R0--R1 (R0 = open(...))
+	LDR	R1, =LEFT_FILED	// R1 -> LEFT_FILED
+	STR	R0, [R1]	// LEFT_FILED = R0
+	MOV	R4, #0		// R4 = 0 (Later: size)
+
+left_sym_loop:
+	LDR	R0, =LEFT_FILED	// R0 -> LEFT_FILED
+	LDR	R0, [R0]	// R0 = LEFT_FILED
+	LDR	R1, =POSCOLOR	// R1 -> POSCOLOR
+	MOV	R2, #12		// R2 = 12 (bytes to read)
+	BL	read		// Parameters: R0--R2
+	CMP	R0, #0		// R0 ? 0
+	BEQ	end_left_sym	// (Break)
+	LDR	R0, =POSCOLOR	// R0 -> POSCOLOR
+	LDR	R1, [R0, #0]	// R1 = x
+	LDR	R2, [R0, #4]	// R2 = y
+	LDR	R3, [R0, #8]	// R3 = color
+	LDR	R0, =LINELENGTH	// R0 -> LINELENGTH
+	LDR	R0, [R0]	// R0 = LINELENGTH
+	MUL	R2, R2, R0	// R2 = y * LINELENGTH
+	LSL	R1, R1, #2	// R1 = x * 4
+	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
+	PUSH	{R1, R3}	// Push {offset, color}
+	ADD	R4, #8		// R4 += 8
+	BAL	left_sym_loop	// (Loop)
+
+end_left_sym:
+	LDR	R0, =LEFT_STACK	// R0 -> LEFT_STACK
+	STR	R4, [R0, #0]	// size = R4
+	STR	SP, [R0, #4]	// location = SP
+
+	// Get right symbol
+
+prep_right_sym:
+	LDR	R0, =RIGHT_IMG	// R0 -> RIGHT_IMG
+	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
+	BL	open		// Parameters: R0--R1 (R0 = open(...))
+	LDR	R1, =RIGHT_FILED  // R1 -> RIGHT_FILED
+	STR	R0, [R1]	// RIGHT_FILED = R0
+	MOV	R4, #0		// R4 = 0 (Later: size)
+
+right_sym_loop:
+	LDR	R0, =RIGHT_FILED  // R0 -> RIGHT_FILED
+	LDR	R0, [R0]	// R0 = RIGHT_FILED
+	LDR	R1, =POSCOLOR	// R1 -> POSCOLOR
+	MOV	R2, #12		// R2 = 12 (bytes to read)
+	BL	read		// Parameters: R0--R2
+	CMP	R0, #0		// R0 ? 0
+	BEQ	end_right_sym	// (Break)
+	LDR	R0, =POSCOLOR	// R0 -> POSCOLOR
+	LDR	R1, [R0, #0]	// R1 = x
+	LDR	R2, [R0, #4]	// R2 = y
+	LDR	R3, [R0, #8]	// R3 = color
+	LDR	R0, =LINELENGTH	// R0 -> LINELENGTH
+	LDR	R0, [R0]	// R0 = LINELENGTH
+	MUL	R2, R2, R0	// R2 = y * LINELENGTH
+	LSL	R1, R1, #2	// R1 = x * 4
+	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
+	PUSH	{R1, R3}	// Push {offset, color}
+	ADD	R4, #8		// R4 += 8
+	BAL	right_sym_loop	// (Loop)
+
+end_right_sym:
+	LDR	R0, =RIGHT_STACK  // R0 -> RIGHT_STACK
+	STR	R4, [R0, #0]	// size = R4
+	STR	SP, [R0, #4]	// location = SP
+
+	// After all the symbols are loaded
+
+after_loading_sym:
+	MOV	FP, SP		// Set link
+
+	// Debugging
+
 some_function:
-	LDR	R0, =DOWN_STACK	// R0 -> UP_STACK
+	LDR	R0, =RIGHT_STACK  // R0 -> (SOMETHING)_STACK
 	LDR	R1, =BUFFER	// R1 -> BUFFER
 	LDR	R2, =OFFSET	// R2 -> OFFSET
 	LDR	R2, [R2]	// R2 = OFFSET
 	LDR	R3, [R0, #0]	// R3 = size
-	BL	symbol_loop	// Parameters: R0--R3
+	BL	set_symbol	// Parameters: R0--R3
 	BL	set_screen	// Parameters: (None)
-	B	done
-
+	MOV	R0, #1		// R0 = 1
+	BL	sleep		// Parameters: R0
+	B	done		// Terminate the program
+	
 	/* R0 -> (SYMBOL)_STACK, R1 -> BUFFER, R2 = OFFSET, R3 = size */
+set_symbol:
+	PUSH	{R4-R5}		// Save R4-R5
+
 symbol_loop:
 	SUBS	R3, #8		// size -= 8 ==> set flags
-	MOVMI	PC, LR		// (Break)
+	BMI	end_symbol	// (Break)
 	LDR	SP, [R0, #4]	// SP = location
 	LDRD	R4, [SP, R3]	// R4,R5 = offset,color
 	ADD	R4, R4, R2	// R4 = offset + OFFSET (new offset)
 	STR	R5, [R1, R4]	// BUFFER[new offset] = color
 	BAL	symbol_loop	// (Loop)
 
+end_symbol:	
+	POP	{R4-R5}		// Fetch R4-R5
+	MOV	SP, FP		// Restore link
+	MOV	PC, LR		// (Go back)
+
 set_screen:
-	PUSH	{LR}		// Save LR
+	PUSH	{R0-R2, LR}	// Save
 	LDR	R0, =BUFFER	// R0 -> BUFFER
 	LDR	R1, =fbp	// R1 -> fbp
 	LDR	R1, [R1]	// R1 = mapped fbp
 	LDR	R2, =SCREENSIZE	// R2 -> SCREENSIZE
 	LDR	R2, [R2]	// R2 = SCREENSIZE
 	BL	put_screen	// Parameters: R0--R2
-	POP	{PC}		// Fetch LR (into PC)
+	POP	{R0-R2, PC}	// Fetch
 
 /* OLD CODE BELOW 
 	
