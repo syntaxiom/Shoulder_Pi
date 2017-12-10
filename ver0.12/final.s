@@ -9,16 +9,8 @@ fbp:
 	.space	4
 	
 	.comm	vinfo,160,4
-	.comm	finfo,68,4
-	.comm	t_start,8,4
-	.comm	t_end,8,4
-	.comm	t_save,8,4
 
 	.text
-
-	.equ FLOOR, 700
-	.EQU ACCEL, 0
-	.equ GRAVITY, 1
 
 	/* R0 -> BUFFER, R1 = fbp, R2 = screen size (loop counter) */
 	.global put_screen
@@ -204,6 +196,78 @@ end_right_sym:
 	STR	R4, [R0, #0]	// size = R4
 	STR	SP, [R0, #4]	// location = SP
 
+	// Get B symbol
+
+prep_b_sym:
+	LDR	R0, =B_IMG	// R0 -> B_IMG
+	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
+	BL	open		// Parameters: R0--R1 (R0 = open(...))
+	LDR	R1, =B_FILED	// R1 -> B_FILED
+	STR	R0, [R1]	// LEFT_FILED = R0
+	MOV	R4, #0		// R4 = 0 (Later: size)
+
+b_sym_loop:
+	LDR	R0, =B_FILED	// R0 -> B_FILED
+	LDR	R0, [R0]	// R0 = B_FILED
+	LDR	R1, =POSCOLOR	// R1 -> POSCOLOR
+	MOV	R2, #12		// R2 = 12 (bytes to read)
+	BL	read		// Parameters: R0--R2
+	CMP	R0, #0		// R0 ? 0
+	BEQ	end_b_sym	// (Break)
+	LDR	R0, =POSCOLOR	// R0 -> POSCOLOR
+	LDR	R1, [R0, #0]	// R1 = x
+	LDR	R2, [R0, #4]	// R2 = y
+	LDR	R3, [R0, #8]	// R3 = color
+	LDR	R0, =LINELENGTH	// R0 -> LINELENGTH
+	LDR	R0, [R0]	// R0 = LINELENGTH
+	MUL	R2, R2, R0	// R2 = y * LINELENGTH
+	LSL	R1, R1, #2	// R1 = x * 4
+	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
+	PUSH	{R1, R3}	// Push {offset, color}
+	ADD	R4, #8		// R4 += 8
+	BAL	b_sym_loop	// (Loop)
+
+end_b_sym:
+	LDR	R0, =B_STACK	// R0 -> B_STACK
+	STR	R4, [R0, #0]	// size = R4
+	STR	SP, [R0, #4]	// location = SP
+
+	// Get A symbol
+
+prep_a_sym:
+	LDR	R0, =A_IMG	// R0 -> A_IMG
+	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
+	BL	open		// Parameters: R0--R1 (R0 = open(...))
+	LDR	R1, =A_FILED	// R1 -> A_FILED
+	STR	R0, [R1]	// A_FILED = R0
+	MOV	R4, #0		// R4 = 0 (Later: size)
+
+a_sym_loop:
+	LDR	R0, =A_FILED	// R0 -> A_FILED
+	LDR	R0, [R0]	// R0 = A_FILED
+	LDR	R1, =POSCOLOR	// R1 -> POSCOLOR
+	MOV	R2, #12		// R2 = 12 (bytes to read)
+	BL	read		// Parameters: R0--R2
+	CMP	R0, #0		// R0 ? 0
+	BEQ	end_a_sym	// (Break)
+	LDR	R0, =POSCOLOR	// R0 -> POSCOLOR
+	LDR	R1, [R0, #0]	// R1 = x
+	LDR	R2, [R0, #4]	// R2 = y
+	LDR	R3, [R0, #8]	// R3 = color
+	LDR	R0, =LINELENGTH	// R0 -> LINELENGTH
+	LDR	R0, [R0]	// R0 = LINELENGTH
+	MUL	R2, R2, R0	// R2 = y * LINELENGTH
+	LSL	R1, R1, #2	// R1 = x * 4
+	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
+	PUSH	{R1, R3}	// Push {offset, color}
+	ADD	R4, #8		// R4 += 8
+	BAL	a_sym_loop	// (Loop)
+
+end_a_sym:
+	LDR	R0, =A_STACK	// R0 -> A_STACK
+	STR	R4, [R0, #0]	// size = R4
+	STR	SP, [R0, #4]	// location = SP
+
 	// After all the symbols are loaded
 
 after_loading_sym:
@@ -211,21 +275,32 @@ after_loading_sym:
 
 	// Debugging
 
-some_function:
-	LDR	R0, =RIGHT_STACK  // R0 -> (SOMETHING)_STACK
-	LDR	R1, =BUFFER	// R1 -> BUFFER
-	LDR	R2, =OFFSET	// R2 -> OFFSET
-	LDR	R2, [R2]	// R2 = OFFSET
-	LDR	R3, [R0, #0]	// R3 = size
-	BL	set_symbol	// Parameters: R0--R3
+debug:
+	LDR	R0, =LEFT_STACK	// R0 -> LEFT_STACK
+	BL	prep_symbol	// Parameters: R0
+	LDR	R0, =64		// R0 = x
+	LDR	R1, =0		// R1 = y
+	BL	adj_offset	// Parameters: R0--R1
+	LDR	R0, =UP_STACK	// R0 -> UP_STACK
+	BL	prep_symbol	// Parameters: R0
+	LDR	R0, =128	// R0 = x
+	LDR	R1, =0		// R1 = y
+	BL	adj_offset	// Parameters: R0--R1
+	LDR	R0, =B_STACK	// R0 -> A_STACK
+	BL	prep_symbol	// Parameters: R0
 	BL	set_screen	// Parameters: (None)
-	MOV	R0, #1		// R0 = 1
+	MOV	R0, #1		// R0 = seconds
 	BL	sleep		// Parameters: R0
 	B	done		// Terminate the program
-	
-	/* R0 -> (SYMBOL)_STACK, R1 -> BUFFER, R2 = OFFSET, R3 = size */
-set_symbol:
+
+	/* R0 -> (SYMBOL)_STACK */
+prep_symbol:
 	PUSH	{R4-R5}		// Save R4-R5
+	LDR	R1, =BUFFER	// @ R1 -> BUFFER
+	LDR	R2, =OFFSET	// R2 -> OFFSET
+	LDR	R2, [R2]	// @ R2 = OFFSET
+	LDR	R3, [R0, #0]	// R3 = size
+	ADD	R3, #8		// @ R3 = size + 8 (R4--R5 are pushed)
 
 symbol_loop:
 	SUBS	R3, #8		// size -= 8 ==> set flags
@@ -241,119 +316,29 @@ end_symbol:
 	MOV	SP, FP		// Restore link
 	MOV	PC, LR		// (Go back)
 
+	/* (No parameters) */
 set_screen:
-	PUSH	{R0-R2, LR}	// Save
+	PUSH	{LR}		// Save
 	LDR	R0, =BUFFER	// R0 -> BUFFER
 	LDR	R1, =fbp	// R1 -> fbp
 	LDR	R1, [R1]	// R1 = mapped fbp
 	LDR	R2, =SCREENSIZE	// R2 -> SCREENSIZE
 	LDR	R2, [R2]	// R2 = SCREENSIZE
 	BL	put_screen	// Parameters: R0--R2
-	POP	{R0-R2, PC}	// Fetch
+	POP	{PC}		// Fetch
 
-/* OLD CODE BELOW 
-	
-open_image:
-	LDR	R0, =IMAGEFILE	// R0 -> IMAGEFILE
-	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
-	BL	open		// Parameters: R0--R1
-	LDR	R1, =IMG_FILED	// R1 -> IMG_FILED
-	STR	R0, [R1]	// IMG_FILED = open("/home/pi/Desktop/image.bin\000")
-	MOV	R4, #0		// R4 = 0 (track size of stack)
-
-image_loop:
-	LDR	R0, =IMG_FILED	// R0 -> IMG_FILED
-	LDR	R0, [R0]	// R0 = IMG_FILED
-	LDR	R1, =POSCOLOR	// R1 -> POSCOLOR
-	MOV	R2, #12		// R2 = 12 (bytes to read)
-	BL	read		// Parameters: R0--R2
-	CMP	R0, #0		// R0 ? 0
-	BEQ	set_stack	// (Break)
-	LDR	R0, =POSCOLOR	// R0 -> POSCOLOR
-	LDR	R1, [R0, #0]	// R1 = x
-	LDR	R2, [R0, #4]	// R2 = y
-	LDR	R3, [R0, #8]	// R3 = color
-	LDR	R0, =LINELENGTH	// R0 -> LINELENGTH
-	LDR	R0, [R0]	// R0 = LINELENGTH
-	MUL	R2, R2, R0	// R2 = y * LINELENGTH
-	LSL	R1, R1, #2	// R1 = x * 4
-	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
-	PUSH	{R1, R3}	// Push {offset, color}
-	ADD	R4, #8		// R4 += 8
-	BAL	image_loop	// (Loop)
-
-set_stack:
-	LDR	R0, =STACKSIZE	// R0 -> STACKSIZE
-	STR	R4, [R0]	// STACKSIZE = R4
-	MOV	FP, SP		// Set dynamic link
-
-// LOOP STARTS HERE 
-
-big_loop:
-	LDR	R0, =2		// R0 = 2 (Opcode for CLOCK_MONOTONIC)
-	LDR	R1, =t_start	// R1 -> t_start
-	BL	clock_gettime	// Parameters: R0--R1
-
-prep_stack:
-	LDR	R0, =STACKSIZE	// R0 -> STACKSIZE
-	LDR	R0, [R0]	// @ R0 = STACKSIZE
+	/* R0 = x, R1 = y*/
+adj_offset:
+	LDR	R2, =LINELENGTH	// R2 -> LINELENGTH
+	LDR	R2, [R2]	// R2 = LINELENGTH
+	LSL	R0, #2		// R0 = x * 4
+	MUL	R1, R1, R2	// R1 = y * LINELENGTH
+	ADD	R0, R0, R1	// R0 = (x * 4) + (y * LINELENGTH) (offset)
 	LDR	R1, =OFFSET	// R1 -> OFFSET
-	LDR	R1, [r1]	// @ R1 = OFFSET
-	LDR	R2, =BUFFER	// @ R2 -> BUFFER
-	LDR	R3, =0		// @ R3 = 0
+	STR	R0, [R1]	// OFFSET = offset
+	MOV	PC, LR
 
-stack_loop:
-	SUBS	R0, #8		// R0 -= 8
-	BMI	prep_buffer	// (Break)
-	LDRD	R4, [FP, R0]	// R4,R5 = offset,color
-	STR	R3, [R2, R4]	// BUFFER[offset] = 0
-	ADD	R4, R4, R1	// R4 = offset + OFFSET
-	STRD	R4, [FP, R0]	// offset,color = R4,R5
-	STR	R5, [R2, R4]	// BUFFER[offset] = color
-	BAL	stack_loop	// (Loop)
-
-prep_buffer:
-	LDR	R0, =STACKSIZE	// R0 -> STACKSIZE
-	LDR	R0, [R0]	// @ R0 = STACKSIZE
-	LDR	R1, =BUFFER	// @ R1 = BUFFER
-
-buffer_loop:
-	SUBS	R0, #8		// R0 -= 8
-	BMI	set_screen	// (Break)
-	LDRD	R2, [FP, R0]	// R2,R3 = offset,color
-	STR	R3, [R1, R2]	// BUFFER[offset] = color
-	BAL	buffer_loop	// (Loop)
-	
-set_screen:
-	LDR	R0, =BUFFER	// R0 -> BUFFER
-	LDR	R1, =fbp	// R1 -> fbp
-	LDR	R1, [R1]	// R1 = fbp
-	LDR	R2, =SCREENSIZE	// R2 -> SCREENSIZE
-	LDR	R2, [R2]	// R2 = SCREENSIZE
-	BL	put_screen	// Parameters: R0--R2
-
-wait_here:
-	LDR	R0, =2		// R0 = 2 (Opcode for CLOCK_MONOTONIC)
-	LDR	R1, =t_end	// R1 -> t_end
-	BL	clock_gettime	// Parameters: R0--R1
-	LDR	R0, =t_end	// R0 -> t_end
-	LDR	R0, [R0, #4]	// R0 = t_end.nanoseconds
-	LDR	R1, =t_start	// R1 -> t_start
-	LDR	R1, [R1, #4]	// R1 = t_start.nanoseconds
-	SUB	R0, R0, R1	// R0 = elapsed
-	LDR	R2, =FPS_NANOS	// R2 -> FPS_NANOS
-	LDR	R2, [R2]	// R2 = FPS_NANOS
-	SUB	R1, R2, R0	// R1 = FPS_NANOS - elapsed
-	LDR	R0, =t_save	// R0 -> t_save
-	STR	R1, [R0, #4]	// t_save.nsec = R1
-	LDR	R1, =0		// R1 = 0
-	BL	nanosleep	// Parameters: R0--R1
-
-big_reset:
-	BAL	big_loop	// (LOOP)
-
- OLD CODE ABOVE */
-
+	/* (No parameters) */
 done:
 	LDR	R0, =fbp	// R0 -> fbp
 	LDR	R1, =SCREENSIZE	// R1 -> screen size
@@ -368,21 +353,11 @@ done:
 	.bss
 BUFFER:
 	.skip	0x7E9000
-COLLISION:
-	.skip	0x7E9000
 
 	.data
-SAVE_TIME:
-	.word	0
-FPS_MICROS:
-	.word	16725
 FPS_NANOS:
 	.word	16666660
 FB_FILED:
-	.word	0
-IMG_FILED:
-	.word	0
-COLL_FILED:
 	.word	0
 POSCOLOR:
 	.skip	12
@@ -394,17 +369,8 @@ LINELENGTH:
 	.word	0
 STACKSIZE:
 	.word	0
-DELTA:
-	.word	200
-	.word	FLOOR-1
-POS:
-	.word	0
-	.word	0
 OFFSET:
 	.word	0
-COLLPOS:
-	.word	400
-	.word	400
 
 UP_FILED:
 	.word	0
@@ -442,8 +408,6 @@ A_STACK:
 	
 FRAMEBUF:
 	.ascii	"/dev/fb0\000"
-IMAGEFILE:
-	.ascii	"/home/pi/Desktop/image.bin\000"
 UP_IMG:
 	.ascii	"/home/pi/Desktop/up.bin\000"
 DOWN_IMG:
@@ -456,6 +420,3 @@ B_IMG:
 	.ascii	"/home/pi/Desktop/b.bin\000"
 A_IMG:
 	.ascii	"/home/pi/Desktop/a.bin\000"
-
-/* NOTES
-	*/
