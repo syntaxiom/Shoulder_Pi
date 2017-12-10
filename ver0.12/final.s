@@ -299,8 +299,7 @@ prep_symbol:
 	LDR	R1, =BUFFER	// @ R1 -> BUFFER
 	LDR	R2, =OFFSET	// R2 -> OFFSET
 	LDR	R2, [R2]	// @ R2 = OFFSET
-	LDR	R3, [R0, #0]	// R3 = size
-	ADD	R3, #8		// @ R3 = size + 8 (R4--R5 are pushed)
+	LDR	R3, [R0, #0]	// @ R3 = size
 
 symbol_loop:
 	SUBS	R3, #8		// size -= 8 ==> set flags
@@ -346,6 +345,24 @@ done:
 	BL	munmap		// Parameters: R0--R1
 	LDR	R0, =FB_FILED	// R0 -> FB_FILED
 	LDR	R0, [R0]	// R0 = FB_FILED
+	BL	close		// Parameters: R0
+	LDR	R0, =UP_FILED	// R0 -> UP_FILED
+	LDR	R0, [R0]	// R0 = UP_FILED
+	BL	close		// Parameters: R0
+	LDR	R0, =DOWN_FILED	// R0 -> DOWN_FILED
+	LDR	R0, [R0]	// R0 = DOWN_FILED
+	BL	close		// Parameters: R0
+	LDR	R0, =LEFT_FILED	// R0 -> LEFT_FILED
+	LDR	R0, [R0]	// R0 = LEFT_FILED
+	BL	close		// Parameters: R0
+	LDR	R0, =RIGHT_FILED  // R0 -> RIGHT_FILED
+	LDR	R0, [R0]	// R0 = RIGHT_FILED
+	BL	close		// Parameters: R0
+	LDR	R0, =B_FILED	// R0 -> B_FILED
+	LDR	R0, [R0]	// R0 = B_FILED
+	BL	close		// Parameters: R0
+	LDR	R0, =A_FILED	// R0 -> A_FILED
+	LDR	R0, [R0]	// R0 = A_FILED
 	BL	close		// Parameters: R0
 	MOV	R0, #0		// R0 = 0 (return code)
 	BLAL	exit		// Terminate the program
