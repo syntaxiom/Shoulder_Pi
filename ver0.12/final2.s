@@ -310,7 +310,7 @@ debug:
 	CMP	R0, #LEFT	// LEFT pressed?
 	BEQ	left_press	// Parameters: None
 	CMP	R0, #RIGHT	// RIGHT pressed?
-	BEQ	right_held	// Parameters: None
+	BEQ	right_press	// Parameters: None
 	BAL	debug		// (Loop)
 
 	/* (No parameters) */
