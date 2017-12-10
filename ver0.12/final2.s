@@ -12,6 +12,15 @@ fbp:
 
 	.text
 
+	.equ	A, 	0x80
+	.equ	B, 	0x40
+	.equ	SELECT,	0x20
+	.equ	START,	0x10
+	.equ	UP,	0x08
+	.equ	DOWN,	0x04
+	.equ	LEFT,	0x02
+	.equ	RIGHT,	0X01
+
 	/* R0 -> BUFFER, R1 = fbp, R2 = screen size (loop counter) */
 	.global put_screen
 put_screen:
@@ -278,6 +287,7 @@ end_a_sym:
 
 after_loading_sym:
 	MOV	FP, SP		// Set link
+	BL	set_screen	// Parameters: None
 
 	// Debugging
 
@@ -285,16 +295,86 @@ debug:
 	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
 	LDR	R0, [R0]	// R0 = JOYSTICK
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
-	CMP	R0, #0x80	// A pressed?
-	BEQ	a_held		// Parameters: None
+	CMP	R0, #A		// A pressed?
+	BLEQ	a_held		// Parameters: None
+	CMP	R0, #B		// B pressed?
+	BLEQ	b_held		// Parameters: None
+	CMP	R0, #SELECT	// SELECT pressed?
+	BLEQ	select_held	// Parameters: None
+	CMP	R0, #START	// START pressed?
+	BLEQ	start_held	// Parameters: None
+	CMP	R0, #UP		// UP pressed?
+	BLEQ	up_held		// Parameters: None
+	CMP	R0, #DOWN	// DOWN pressed?
+	BLEQ	down_held	// Parameters: None
+	CMP	R0, #LEFT	// LEFT pressed?
+	BLEQ	left_held	// Parameters: None
+	CMP	R0, #RIGHT	// RIGHT pressed?
+	BLEQ	right_held	// Parameters: None
 	BAL	debug		// (Loop)
 
 a_held:
 	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
 	LDR	R0, [R0]	// R0 = JOYSTICK
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
-	CMP	R0, #0x80	// A pressed?
+	CMP	R0, #A		// A pressed?
 	BEQ	a_held		// (Loop)
+	B	done		// Terminate the program
+
+b_held:
+	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
+	LDR	R0, [R0]	// R0 = JOYSTICK
+	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
+	CMP	R0, #B		// B pressed?
+	BEQ	b_held		// (Loop)
+	B	done		// Terminate the program
+
+select_held:
+	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
+	LDR	R0, [R0]	// R0 = JOYSTICK
+	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
+	CMP	R0, #SELECT	// SELECT pressed?
+	BEQ	select_held	// (Loop)
+	B	done		// Terminate the program
+
+start_held:
+	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
+	LDR	R0, [R0]	// R0 = JOYSTICK
+	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
+	CMP	R0, #START	// START pressed?
+	BEQ	start_held	// (Loop)
+	B	done		// Terminate the program
+
+up_held:
+	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
+	LDR	R0, [R0]	// R0 = JOYSTICK
+	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
+	CMP	R0, #UP		// UP pressed?
+	BEQ	up_held		// (Loop)
+	B	done		// Terminate the program
+
+down_held:
+	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
+	LDR	R0, [R0]	// R0 = JOYSTICK
+	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
+	CMP	R0, #DOWN	// DOWN pressed?
+	BEQ	down_held	// (Loop)
+	B	done		// Terminate the program
+
+left_held:
+	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
+	LDR	R0, [R0]	// R0 = JOYSTICK
+	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
+	CMP	R0, #LEFT	// LEFT pressed?
+	BEQ	left_held	// (Loop)
+	B	done		// Terminate the program
+
+right_held:
+	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
+	LDR	R0, [R0]	// R0 = JOYSTICK
+	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
+	CMP	R0, #RIGHT	// RIGHT pressed?
+	BEQ	right_held	// (Loop)
 	B	done		// Terminate the program
 
 	/* R0 -> (SYMBOL)_STACK */
@@ -341,6 +421,19 @@ set_offset:
 	STR	R0, [R1]	// OFFSET = offset
 	MOV	PC, LR
 
+	/* R0 = dx, R1 = dy */
+adj_offset:
+	LDR	R2, =LINELENGTH	// R2 -> LINELENGTH
+	LDR	R2, [R2]	// R2 = LINELENGTH
+	LSL	R0, #2		// R0 = x * 4
+	MUL	R1, R1, R2	// R1 = y * LINELENGTH
+	ADD	R0, R0, R1	// R0 = (x * 4) + (y * LINELENGTH) (offset)
+	LDR	R1, =OFFSET	// R1 -> OFFSET
+	LDR	R2, [R1]	// R2 = OFFSET
+	ADD	R2, R0		// offset += OFFSET
+	STR	R2, [R1]	// OFFSET = offset
+	MOV	PC, LR
+
 	/* (No parameters) */
 done:
 	LDR	R0, =fbp	// R0 -> fbp
@@ -378,8 +471,7 @@ BUFFER:
 	.data
 JOYSTICK:
 	.word	0
-BUTTON:
-	.word	0
+	
 FB_FILED:
 	.word	0
 POSCOLOR:
