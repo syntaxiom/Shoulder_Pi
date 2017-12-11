@@ -50,10 +50,14 @@ main:
 	BL	ioctl		// Parameters: R0--R2
 	LDR	R0, =vinfo	// R0 -> vinfo
 	LDR	R1, [R0, #0]	// R1 = vinfo.xres
+	LDR	R2, =X_RES	// R2 -> X_RES
+	STR	R1, [R2]	// X_RES = vinfo.xres
 	LSL	R1, R1, #2	// R1 = vinfo.xres * 4 = line length
 	LDR	R2, =LINELENGTH	// R2 -> LINELENGTH
 	STR	R1, [R2]	// LINELENGTH = line length
 	LDR	R2, [R0, #4]	// R2 = vinfo.yres
+	LDR	R3, =Y_RES	// R3 -> Y_RES
+	STR	R2, [R3]	// Y_RES = vinfo.yres
 	MUL	R1, R1, R2	// R1 = line length * vinfo.yres
 	LDR	R0, =SCREENSIZE	// R0 -> screen size
 	STR	R1, [R0]	// screen size = vinfo.xres * vinfo.yres * 4
@@ -291,14 +295,48 @@ after_loading_sym:
 
 	// Game
 
-game:
-	NOP
+new_symbol:	
+	BL	clock		// Parameters: (None)
+	LDR	R1, =6		// R1 = 6
+	BL	divide		// Parameters: R0--R1
+	LSL	R1, #3		// Remainder *= 8
+	LDR	R2, =TEMP	// R2 -> TEMP
+	STR	R1, [R2, #0]	// TEMP[0] = A_STACK offset
+	
+new_x:
+	BL	clock		// Parameters: (None)
+	LDR	R1, =X_RES	// R1 -> X_RES
+	LDR	R1, [R1]	// R1 = X_RES
+	SUB	R1, #64		// R1 -= 64 (Width of sprite)
+	BL	divide		// Parameters: R0--R1
+	LDR	R2, =TEMP	// R2 -> TEMP
+	STR	R1, [R2, #4]	// TEMP[4] = x
+
+new_y:
+	BL	clock		// Parameters: (None)
+	LDR	R1, =Y_RES	// R1 -> Y_RES
+	LDR	R1, [R1]	// R1 = Y_RES
+	SUB	R1, #64		// R1 -= 64 (Width of sprite)
+	BL	divide		// Parameters: R0--R1
+	LDR	R2, =TEMP	// R2 -> TEMP
+	STR	R1, [R2, #8]	// TEMP[8] = y
+
+put_together:
+	LDR	R2, =TEMP	// R2 -> TEMP
+	LDR	R1, [R2, #8]	// R1 = y
+	LDR	R0, [R2, #4]	// R0 = x
+	BL	set_offset	// Parameters: R0--R1
+	LDR	R2, =TEMP	// R2 -> TEMP
+	LDR	R1, [R2, #0]	// R1 = A_STACK offset
+	LDR	R0, =A_STACK	// R0 -> A_STACK
+	ADD	R0, R1		// R0 -> (SYMBOL)_STACK
+	BL	prep_symbol	// Parameters: R0--R1
+	BL	set_screen	// Parameters: (None)
 	
 	// Input loop
 
 input:
-	MOV	R0, #1		// R0 = milliseconds
-	BL	delay		// Parameters: R0
+	BL	inc_counter	// Parameters: (None)
 	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
 	LDR	R0, [R0]	// R0 = JOYSTICK
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
@@ -321,6 +359,17 @@ input:
 	BAL	input		// (Loop)
 
 	/* (No parameters) */
+inc_counter:
+	PUSH	{LR}		// Save
+	MOV	R0, #1		// R0 = milliseconds
+	BL	delay		// Parameters: R0
+	LDR	R0, =COUNTER	// R0 -> COUNTER
+	LDR	R1, [R0]	// R1 = COUNTER
+	ADD	R1, #1		// R1 += 1
+	STR	R1, [R0]	// COUNTER = (incremented)
+	POP	{PC}		// Fetch
+
+	/* (No parameters) */
 a_press:
 	LDR	R0, =A_STACK	// R0 -> A_STACK
 	BL	prep_symbol	// Parameters: R0
@@ -328,10 +377,9 @@ a_press:
 	LDR	R0, =64		// R0 = dx
 	LDR	R1, =0		// R1 = dy
 	BL	adj_offset	// Parameters: R0--R1
-	MOV	R0, #1
-	BL	delay
 	
 a_held:
+	BL	inc_counter	// Parameters: (None)
 	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
 	LDR	R0, [R0]	// R0 = JOYSTICK
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
@@ -349,6 +397,7 @@ b_press:
 	BL	adj_offset	// Parameters: R0--R1
 
 b_held:
+	BL	inc_counter	// Parameters: (None)
 	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
 	LDR	R0, [R0]	// R0 = JOYSTICK
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
@@ -358,6 +407,7 @@ b_held:
 
 	/* (No parameters) */
 select_held:
+	BL	inc_counter	// Parameters: (None)
 	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
 	LDR	R0, [R0]	// R0 = JOYSTICK
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
@@ -367,6 +417,7 @@ select_held:
 
 	/* (No parameters) */
 start_held:
+	BL	inc_counter	// Parameters: (None)
 	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
 	LDR	R0, [R0]	// R0 = JOYSTICK
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
@@ -384,6 +435,7 @@ up_press:
 	BL	adj_offset	// Parameters: R0--R1
 	
 up_held:
+	BL	inc_counter	// Parameters: (None)
 	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
 	LDR	R0, [R0]	// R0 = JOYSTICK
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
@@ -401,6 +453,7 @@ down_press:
 	BL	adj_offset	// Parameters: R0--R1
 
 down_held:
+	BL	inc_counter	// Parameters: (None)
 	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
 	LDR	R0, [R0]	// R0 = JOYSTICK
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
@@ -418,6 +471,7 @@ left_press:
 	BL	adj_offset	// Parameters: R0--R1
 
 left_held:
+	BL	inc_counter	// Parameters: (None)
 	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
 	LDR	R0, [R0]	// R0 = JOYSTICK
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
@@ -435,6 +489,7 @@ right_press:
 	BL	adj_offset	// Parameters: R0--R1
 
 right_held:
+	BL	inc_counter	// Parameters: (None)
 	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
 	LDR	R0, [R0]	// R0 = JOYSTICK
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
@@ -475,7 +530,7 @@ set_screen:
 	BL	put_screen	// Parameters: R0--R2
 	POP	{PC}		// Fetch
 
-	/* R0 = x, R1 = y*/
+	/* R0 = x, R1 = y */
 set_offset:
 	PUSH	{LR}		// Save
 	LDR	R2, =POS	// R2 -> POS
@@ -586,10 +641,18 @@ SCREENSIZE:
 	.word	0
 LINELENGTH:
 	.word	0
+X_RES:
+	.word	0
+Y_RES:
+	.word	0
 	
 OFFSET:
 	.word	0
 POS:
+	.word	0
+	.word	0
+TEMP:
+	.word	0
 	.word	0
 	.word	0
 
@@ -626,13 +689,13 @@ LEFT_STACK:
 RIGHT_STACK:
 	.word	0
 	.word	0
-
-LEVEL:
-	.word	0
+	
 COUNTER:
-	.word	5000
-ALIENS:
 	.word	0
+MILLI_PER_SEC:
+	.word	1000
+TOTAL_SEC:
+	.word	10
 SCORE:
 	.word	0
 	
