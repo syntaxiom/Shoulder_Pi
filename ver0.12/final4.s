@@ -289,46 +289,10 @@ after_loading_sym:
 	MOV	FP, SP		// Set link
 	BL	set_screen	// Parameters: None
 
-	// Debugging
+	// Game
 
-debug:
-	BL	clock		// Parameters: (None); R0 = n
-	LDR	R1, =6		// R1 = d
-	BL	divide		// Parameters: R0--R1
-	LSL	R1, #3		// Remainder *= 8
-	LDR	R0, =A_STACK	// R0 -> A_STACK
-	ADD	R0, R1		// R0 -> (SYMBOL)_STACK
-	BL	prep_symbol	// Parameters: R0
-	BL	set_screen	// Parameters: (None)
-	LDR	R0, =64		// R0 = dx
-	LDR	R1, =0		// R1 = dy
-	BL	adj_offset	// Parameters: R0--R1
-
-debug1:
-	BL	clock		// Parameters: (None); R0 = n
-	LDR	R1, =6		// R1 = d
-	BL	divide		// Parameters: R0--R1
-	LSL	R1, #3		// Remainder *= 8
-	LDR	R0, =A_STACK	// R0 -> A_STACK
-	ADD	R0, R1		// R0 -> (SOMETHING)_STACK
-	BL	prep_symbol	// Parameters: R0
-	BL	set_screen	// Parameters: (None)
-	LDR	R0, =64		// R0 = dx
-	LDR	R1, =0		// R1 = dy
-	BL	adj_offset	// Parameters: R0--R1
-
-debug2:
-	BL	clock		// Parameters: (None); R0 = n
-	LDR	R1, =6		// R1 = d
-	BL	divide		// Parameters: R0--R1
-	LSL	R1, #3		// Remainder *= 8
-	LDR	R0, =A_STACK	// R0 -> A_STACK
-	ADD	R0, R1		// R0 -> (SOMETHING)_STACK
-	BL	prep_symbol	// Parameters: R0
-	BL	set_screen	// Parameters: (None)
-	LDR	R0, =64		// R0 = dx
-	LDR	R1, =0		// R1 = dy
-	BL	adj_offset	// Parameters: R0--R1
+game:
+	NOP
 	
 	// Input loop
 
@@ -364,6 +328,8 @@ a_press:
 	LDR	R0, =64		// R0 = dx
 	LDR	R1, =0		// R1 = dy
 	BL	adj_offset	// Parameters: R0--R1
+	MOV	R0, #1
+	BL	delay
 	
 a_held:
 	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
@@ -512,6 +478,9 @@ set_screen:
 	/* R0 = x, R1 = y*/
 set_offset:
 	PUSH	{LR}		// Save
+	LDR	R2, =POS	// R2 -> POS
+	STR	R0, [R2, #0]	// POS.x = x
+	STR	R1, [R2, #1]	// POS.y = y
 	LDR	R2, =LINELENGTH	// R2 -> LINELENGTH
 	LDR	R2, [R2]	// R2 = LINELENGTH
 	LSL	R0, #2		// R0 = x * 4
@@ -523,7 +492,14 @@ set_offset:
 
 	/* R0 = dx, R1 = dy */
 adj_offset:
-	PUSH	{LR}		// Save
+	PUSH	{R4, LR}	// Save
+	LDR	R2, =POS	// R2 -> POS
+	LDR	R3, [R2, #0]	// R3 = POS.x
+	LDR	R4, [R2, #4]	// R4 = POS.y
+	ADD	R3, R0		// POS.x += dx
+	ADD	R4, R1		// POS.y += dy
+	STR	R3, [R2, #0]	// POS.x = R3
+	STR	R4, [R2, #4]	// POS.y = R4
 	LDR	R2, =LINELENGTH	// R2 -> LINELENGTH
 	LDR	R2, [R2]	// R2 = LINELENGTH
 	LSL	R0, #2		// R0 = x * 4
@@ -533,7 +509,7 @@ adj_offset:
 	LDR	R2, [R1]	// R2 = OFFSET
 	ADD	R2, R0		// offset += OFFSET
 	STR	R2, [R1]	// OFFSET = offset
-	POP	{PC}		// Fetch
+	POP	{R4, PC}	// Fetch
 
 	/* R0 = n, R1 = d */
 divide:
@@ -613,6 +589,9 @@ LINELENGTH:
 	
 OFFSET:
 	.word	0
+POS:
+	.word	0
+	.word	0
 
 A_FILED:
 	.word	0
@@ -649,6 +628,12 @@ RIGHT_STACK:
 	.word	0
 
 LEVEL:
+	.word	0
+COUNTER:
+	.word	5000
+ALIENS:
+	.word	0
+SCORE:
 	.word	0
 	
 FRAMEBUF:
