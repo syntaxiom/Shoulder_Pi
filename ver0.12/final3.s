@@ -300,10 +300,41 @@ debug:
 	ADD	R0, R1		// R0 -> (SOMETHING)_STACK
 	BL	prep_symbol	// Parameters: R0
 	BL	set_screen	// Parameters: (None)
+	LDR	R0, =64		// R0 = dx
+	LDR	R1, =0		// R1 = dy
+	BL	adj_offset	// Parameters: R0--R1
+
+debug1:
+	BL	clock		// Parameters: (None); R0 = n
+	LDR	R1, =6		// R1 = d
+	BL	divide		// Parameters: R0--R1
+	LSL	R1, #3		// Remainder *= 8
+	LDR	R0, =A_STACK	// R0 -> A_STACK
+	ADD	R0, R1		// R0 -> (SOMETHING)_STACK
+	BL	prep_symbol	// Parameters: R0
+	BL	set_screen	// Parameters: (None)
+	LDR	R0, =64		// R0 = dx
+	LDR	R1, =0		// R1 = dy
+	BL	adj_offset	// Parameters: R0--R1
+
+debug2:
+	BL	clock		// Parameters: (None); R0 = n
+	LDR	R1, =6		// R1 = d
+	BL	divide		// Parameters: R0--R1
+	LSL	R1, #3		// Remainder *= 8
+	LDR	R0, =A_STACK	// R0 -> A_STACK
+	ADD	R0, R1		// R0 -> (SOMETHING)_STACK
+	BL	prep_symbol	// Parameters: R0
+	BL	set_screen	// Parameters: (None)
+	LDR	R0, =64		// R0 = dx
+	LDR	R1, =0		// R1 = dy
+	BL	adj_offset	// Parameters: R0--R1
 	
 	// Input loop
 
 input:
+	MOV	R0, #1		// R0 = milliseconds
+	BL	delay		// Parameters: R0
 	LDR	R0, =JOYSTICK	// R0 -> JOYSTICK
 	LDR	R0, [R0]	// R0 = JOYSTICK
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
@@ -340,8 +371,6 @@ a_held:
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
 	CMP	R0, #A		// A pressed?
 	BGE	a_held		// (Loop)
-	MOV	R0, #5		// R0 = milliseconds
-	BL	delay		// Parameters: R0
 	BAL	input		// (Go back)
 
 	/* (No parameters) */
@@ -359,8 +388,6 @@ b_held:
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
 	CMP	R0, #B		// B pressed?
 	BGE	b_held		// (Loop)	
-	MOV	R0, #5		// R0 = milliseconds
-	BL	delay		// Parameters: R0
 	BAL	input		// (Go back)
 
 	/* (No parameters) */
@@ -370,8 +397,6 @@ select_held:
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
 	CMP	R0, #SELECT	// SELECT pressed?
 	BGE	select_held	// (Loop)
-	MOV	R0, #5		// R0 = milliseconds
-	BL	delay		// Parameters: R0
 	BAL	input		// (Go back)
 
 	/* (No parameters) */
@@ -381,8 +406,6 @@ start_held:
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
 	CMP	R0, #START	// START pressed?
 	BGE	start_held	// (Loop)
-	MOV	R0, #5		// R0 = milliseconds
-	BL	delay		// Parameters: R0
 	BAL	input		// (Go back)
 
 	/* (No parameters) */
@@ -400,8 +423,6 @@ up_held:
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
 	CMP	R0, #UP		// UP pressed?
 	BGE	up_held		// (Loop)
-	MOV	R0, #5		// R0 = milliseconds
-	BL	delay		// Parameters: R0
 	BAL	input		// (Go back)
 
 	/* (No parameters) */
@@ -419,8 +440,6 @@ down_held:
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
 	CMP	R0, #DOWN	// DOWN pressed?
 	BGE	down_held	// (Loop)
-	MOV	R0, #5		// R0 = milliseconds
-	BL	delay		// Parameters: R0
 	BAL	input		// (Go back)
 	
 	/* (No parameters) */
@@ -438,8 +457,6 @@ left_held:
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
 	CMP	R0, #LEFT	// LEFT pressed?
 	BGE	left_held	// (Loop)
-	MOV	R0, #5		// R0 = milliseconds
-	BL	delay		// Parameters: R0
 	BAL	input		// (Go back)
 
 	/* (No parameters) */
@@ -457,8 +474,6 @@ right_held:
 	BL	readNesJoystick	// Parameters: R0; R0 = buttons pressed
 	CMP	R0, #RIGHT	// RIGHT pressed?
 	BGE	right_held	// (Loop)
-	MOV	R0, #5		// R0 = milliseconds
-	BL	delay		// Parameters: R0
 	BAL	input		// (Go back)
 
 	/* R0 -> (SYMBOL)_STACK */
