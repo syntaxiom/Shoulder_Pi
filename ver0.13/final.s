@@ -28,6 +28,8 @@ fbp:
 	.equ	_LEFT,	4
 	.equ	_RIGHT,	5
 
+	.equ	STOP,	125
+
 	/* R0 -> BUFFER, R1 = fbp, R2 = screen size (loop counter) */
 	.global put_screen
 put_screen:
@@ -303,14 +305,21 @@ after_loading_sym:
 	// Game
 
 game:
-	MOV	R0, #10		// R0 = milliseconds
+	LDR	R0, =SCORE	// R0 -> SCORE
+	LDR	R1, [R0]	// R1 = SCORE
+	ADD	R1, #1		// R1 += 1
+	STR	R1, [R0]	// SCORE = (incremented)
+	MOV	R0, #STOP	// R0 = milliseconds
 	BL	delay		// Parameters: R0
+	LDR	R0, =COUNTER	// R0 -> COUNTER
+	LDR	R1, [R0]	// R1 = COUNTER
+	ADD	R1, #STOP	// R1 += STOP
+	STR	R1, [R0]	// COUNTER = (incremented)
 
 new_symbol:
 	BL	clock		// Parameters: (None)
-	LDR	R1, =4		// R1 = 4
+	LDR	R1, =6		// R1 = 4
 	BL	divide		// Parameters: R0--R1
-	ADD	R1, #2		// Remainder += 2
 	LSL	R1, #3		// Remainder *= 8
 	LDR	R2, =TEMP	// R2 -> TEMP
 	STR	R1, [R2, #0]	// TEMP[0] = A_STACK offset
@@ -715,7 +724,7 @@ MILLI_PER_SEC:
 TOTAL_SEC:
 	.word	10
 SCORE:
-	.word	0
+	.word	-1
 	
 FRAMEBUF:
 	.ascii	"/dev/fb0\000"
