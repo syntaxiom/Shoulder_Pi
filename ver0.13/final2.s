@@ -29,7 +29,7 @@ fbp:
 	.equ	_RIGHT,	5
 
 	.equ	STOP,	150
-	.equ	TIME,	1000
+	.equ	TIME,	900
 	.equ	CEASE,	2
 
 	/* R0 -> BUFFER, R1 = fbp, R2 = screen size (loop counter) */
@@ -610,6 +610,10 @@ right_held:
 	/* (Get ready for big loop) */
 bottom_game:
 	LDR	R0, =NUM_9_STACK  // R0 -> NUM_9_STACK
+	LDR	R1, =SEC	// R1 -> SEC
+	LDR	R1, [R1]	// R1 = SEC
+	LSL	R1, #3		// R1 *= 8
+	ADD	R0, R1		// R0 = (SYMBOL)_STACK
 	BL	prep_symbol	// Parameters: R0
 	BL	set_screen	// Parameters: (None)
 	BAL	game		// ((Big loop))
