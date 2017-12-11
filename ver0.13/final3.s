@@ -40,6 +40,16 @@ put_screen:
 	SUBS	R2, #64		// R2 -= pixels * bit depth ==> set flags
 	BNE	put_screen	// While R2 > 0, loop
 	MOV	PC, LR		// (Go back)
+
+	/* R0 -> BLANK, R1, -> BUFFER, R2 = fbp, R3 = screen size */
+	.global clear_everything
+clear_everything:
+	VLDM	R0!, {Q0-Q3}	// Q0--Q3 = BLANK[0--15]!
+	VSTM	R1!, {Q0-Q3}	// BUFFER[0--15]! = Q0--Q3
+	VSTM	R2!, {Q0-Q3}	// fbp[0--15]! = Q0--Q3
+	SUBS	R3, #64		// R3 -= pixels * bit depth ==> set flags
+	BNE	clear_everything  // While R3 > 0, loop
+	MOV	PC, LR		// (Go back)
 	
 	.global	main
 main:
@@ -691,6 +701,8 @@ countdown:
 	BL	set_screen	// Parameters: (None)
 	LDR	R0, =1000	// R0 = 1000
 	BL	delay		// Parameters: R0
+	LDR	R0, =NUM_1_STACK  // R0 -> NUM_1_STACK
+	BL	prep_anti_symbol  // Parameters: R0
 
 	// Game
 
@@ -957,6 +969,29 @@ end_symbol:
 	MOV	SP, FP		// Restore link
 	MOV	PC, LR		// (Go back)
 
+	/* R0 -> (SYMBOL)_STACK */
+prep_anti_symbol:
+	PUSH	{R4-R5}		// Save R4-R5
+	LDR	R1, =BUFFER	// @ R1 -> BUFFER
+	LDR	R2, =OFFSET	// R2 -> OFFSET
+	LDR	R2, [R2]	// @ R2 = OFFSET
+	LDR	R3, [R0, #0]	// @ R3 = size
+
+anti_symbol_loop:
+	SUBS	R3, #8		// size -= 8 ==> set flags
+	BMI	end_symbol	// (Break)
+	LDR	SP, [R0, #4]	// SP = location
+	LDR	R4, [SP, R3]	// R4 = offset
+	LDR	R5, =0xFF000000	// R5 = black
+	ADD	R4, R4, R2	// R4 = offset + OFFSET (new offset)
+	STR	R5, [R1, R4]	// BUFFER[new offset] = color
+	BAL	anti_symbol_loop  // (Loop)
+
+end_anti_symbol:	
+	POP	{R4-R5}		// Fetch R4-R5
+	MOV	SP, FP		// Restore link
+	MOV	PC, LR		// (Go back)
+
 	/* (No parameters) */
 set_screen:
 	PUSH	{LR}		// Save
@@ -972,11 +1007,12 @@ set_screen:
 clear_screen:
 	PUSH	{LR}		// Save
 	LDR	R0, =BLANK	// R0 -> BLANK
-	LDR	R1, =fbp	// R1 -> fbp
-	LDR	R1, [R1]	// R1 = mapped fbp
-	LDR	R2, =SCREENSIZE	// R2 -> SCREENSIZE
-	LDR	R2, [R2]	// R2 = SCREENSIZE
-	BL	put_screen	// Parameters: R0--R2
+	LDR	R1, =BUFFER	// R1 -> BUFFER
+	LDR	R2, =fbp	// R2 -> fbp
+	LDR	R2, [R2]	// R2 = mapped fbp
+	LDR	R3, =SCREENSIZE	// R3 -> SCREENSIZE
+	LDR	R3, [R3]	// R3 = SCREENSIZE
+	BL	clear_everything  // Parameters: R0--R3
 	POP	{PC}		// Fetch
 
 	/* R0 = x, R1 = y */
