@@ -21,6 +21,13 @@ fbp:
 	.equ	LEFT,	0x02
 	.equ	RIGHT,	0X01
 
+	.equ	_A,	0
+	.equ	_B,	1
+	.equ	_UP,	2
+	.equ	_DOWN,	3
+	.equ	_LEFT,	4
+	.equ	_RIGHT,	5
+
 	/* R0 -> BUFFER, R1 = fbp, R2 = screen size (loop counter) */
 	.global put_screen
 put_screen:
@@ -371,12 +378,11 @@ inc_counter:
 
 	/* (No parameters) */
 a_press:
-	LDR	R0, =A_STACK	// R0 -> A_STACK
-	BL	prep_symbol	// Parameters: R0
-	BL	set_screen	// Parameters: (None)
-	LDR	R0, =64		// R0 = dx
-	LDR	R1, =0		// R1 = dy
-	BL	adj_offset	// Parameters: R0--R1
+	LDR	R0, =TEMP	// R0 -> TEMP
+	LDR	R1, [R0, #0]	// R1 = TEMP[0]
+	LSR	R1, #3		// R1 /= 8
+	CMP	R1, #_A		// R1 ? _A
+	BEQ	new_symbol	// ((Big loop))
 	
 a_held:
 	BL	inc_counter	// Parameters: (None)
@@ -389,12 +395,11 @@ a_held:
 
 	/* (No parameters) */
 b_press:
-	LDR	R0, =B_STACK	// R0 -> B_STACK
-	BL	prep_symbol	// Parameters: R0
-	BL	set_screen	// Parameters: (None)
-	LDR	R0, =64		// R0 = dx
-	LDR	R1, =0		// R1 = dy
-	BL	adj_offset	// Parameters: R0--R1
+	LDR	R0, =TEMP	// R0 -> TEMP
+	LDR	R1, [R0, #0]	// R1 = TEMP[0]
+	LSR	R1, #3		// R1 /= 8
+	CMP	R1, #_B		// R1 ? _B
+	BEQ	new_symbol	// ((Big loop))
 
 b_held:
 	BL	inc_counter	// Parameters: (None)
@@ -427,12 +432,11 @@ start_held:
 
 	/* (No parameters) */
 up_press:
-	LDR	R0, =UP_STACK	// R0 -> UP_STACK
-	BL	prep_symbol	// Parameters: R0
-	BL	set_screen	// Parameters: (None)
-	LDR	R0, =64		// R0 = dx
-	LDR	R1, =0		// R1 = dy
-	BL	adj_offset	// Parameters: R0--R1
+	LDR	R0, =TEMP	// R0 -> TEMP
+	LDR	R1, [R0, #0]	// R1 = TEMP[0]
+	LSR	R1, #3		// R1 /= 8
+	CMP	R1, #_UP	// R1 ? _UP
+	BEQ	new_symbol	// ((Big loop))
 	
 up_held:
 	BL	inc_counter	// Parameters: (None)
@@ -445,12 +449,11 @@ up_held:
 
 	/* (No parameters) */
 down_press:
-	LDR	R0, =DOWN_STACK	// R0 -> DOWN_STACK
-	BL	prep_symbol	// Parameters: R0
-	BL	set_screen	// Parameters: (None)
-	LDR	R0, =64		// R0 = dx
-	LDR	R1, =0		// R1 = dy
-	BL	adj_offset	// Parameters: R0--R1
+	LDR	R0, =TEMP	// R0 -> TEMP
+	LDR	R1, [R0, #0]	// R1 = TEMP[0]
+	LSR	R1, #3		// R1 /= 8
+	CMP	R1, #_DOWN	// R1 ? _DOWN
+	BEQ	new_symbol	// ((Big loop))
 
 down_held:
 	BL	inc_counter	// Parameters: (None)
@@ -463,12 +466,11 @@ down_held:
 	
 	/* (No parameters) */
 left_press:
-	LDR	R0, =LEFT_STACK	// R0 ->LEFT_STACK
-	BL	prep_symbol	// Parameters: R0
-	BL	set_screen	// Parameters: (None)
-	LDR	R0, =64		// R0 = dx
-	LDR	R1, =0		// R1 = dy
-	BL	adj_offset	// Parameters: R0--R1
+	LDR	R0, =TEMP	// R0 -> TEMP
+	LDR	R1, [R0, #0]	// R1 = TEMP[0]
+	LSR	R1, #3		// R1 /= 8
+	CMP	R1, #_LEFT	// R1 ? _LEFT
+	BEQ	new_symbol	// ((Big loop))
 
 left_held:
 	BL	inc_counter	// Parameters: (None)
@@ -481,12 +483,11 @@ left_held:
 
 	/* (No parameters) */
 right_press:
-	LDR	R0, =RIGHT_STACK  // R0 ->RIGHT_STACK
-	BL	prep_symbol	// Parameters: R0
-	BL	set_screen	// Parameters: (None)
-	LDR	R0, =64		// R0 = dx
-	LDR	R1, =0		// R1 = dy
-	BL	adj_offset	// Parameters: R0--R1
+	LDR	R0, =TEMP	// R0 -> TEMP
+	LDR	R1, [R0, #0]	// R1 = TEMP[0]
+	LSR	R1, #3		// R1 /= 8
+	CMP	R1, #_RIGHT	// R1 ? _RIGHT
+	BEQ	new_symbol	// ((Big loop))
 
 right_held:
 	BL	inc_counter	// Parameters: (None)
