@@ -740,4 +740,5 @@ LEFT_IMG:
 	.ascii	"/home/pi/Desktop/left.bin\000"
 RIGHT_IMG:
 	.ascii	"/home/pi/Desktop/right.bin\000"
-
+NUM_9_IMG:
+	.ascii	"/home/pi/Desktop/9.bin\000"

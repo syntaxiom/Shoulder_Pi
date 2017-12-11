@@ -28,6 +28,8 @@ fbp:
 	.equ	_LEFT,	4
 	.equ	_RIGHT,	5
 
+	.equ	STOP,	125
+
 	/* R0 -> BUFFER, R1 = fbp, R2 = screen size (loop counter) */
 	.global put_screen
 put_screen:
@@ -77,6 +79,42 @@ main:
 	BL	mmap		// Parameters: R0--R3, SP--SP+4
 	LDR	R1, =fbp	// R1 -> fbp
 	STR	R0, [R1]	// fbp = mmap(...)
+
+	// Get 9 symbol
+
+prep_num_9_sym:
+	LDR	R0, =NUM_9_IMG	// R0 -> NUM_9_IMG
+	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
+	BL	open		// Parameters: R0--R1 (R0 = open(...))
+	LDR	R1, =NUM_9_FILED // R1 -> NUM_9_FILED
+	STR	R0, [R1]	// NUM_9_FILED = R0
+	MOV	R4, #0		// R4 = 0 (Later: size)
+
+num_9_sym_loop:
+	LDR	R0, =NUM_9_FILED  // R0 -> NUM_9_FILED
+	LDR	R0, [R0]	// R0 = NUM_9_FILED
+	LDR	R1, =POSCOLOR	// R1 -> POSCOLOR
+	MOV	R2, #12		// R2 = 12 (bytes to read)
+	BL	read		// Parameters: R0--R2
+	CMP	R0, #0		// R0 ? 0
+	BEQ	end_num_9_sym	// (Break)
+	LDR	R0, =POSCOLOR	// R0 -> POSCOLOR
+	LDR	R1, [R0, #0]	// R1 = x
+	LDR	R2, [R0, #4]	// R2 = y
+	LDR	R3, [R0, #8]	// R3 = color
+	LDR	R0, =LINELENGTH	// R0 -> LINELENGTH
+	LDR	R0, [R0]	// R0 = LINELENGTH
+	MUL	R2, R2, R0	// R2 = y * LINELENGTH
+	LSL	R1, R1, #2	// R1 = x * 4
+	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
+	PUSH	{R1, R3}	// Push {offset, color}
+	ADD	R4, #8		// R4 += 8
+	BAL	num_9_sym_loop	// (Loop)
+
+end_num_9_sym:
+	LDR	R0, =NUM_9_STACK  // R0 -> NUM_9_STACK
+	STR	R4, [R0, #0]	// size = R4
+	STR	SP, [R0, #4]	// location = SP
 
 	// Get A symbol
 
@@ -303,14 +341,21 @@ after_loading_sym:
 	// Game
 
 game:
-	MOV	R0, #10		// R0 = milliseconds
+	LDR	R0, =SCORE	// R0 -> SCORE
+	LDR	R1, [R0]	// R1 = SCORE
+	ADD	R1, #1		// R1 += 1
+	STR	R1, [R0]	// SCORE = (incremented)
+	MOV	R0, #STOP	// R0 = milliseconds
 	BL	delay		// Parameters: R0
+	LDR	R0, =COUNTER	// R0 -> COUNTER
+	LDR	R1, [R0]	// R1 = COUNTER
+	ADD	R1, #STOP	// R1 += STOP
+	STR	R1, [R0]	// COUNTER = (incremented)
 
 new_symbol:
 	BL	clock		// Parameters: (None)
-	LDR	R1, =4		// R1 = 4
+	LDR	R1, =6		// R1 = 4
 	BL	divide		// Parameters: R0--R1
-	ADD	R1, #2		// Remainder += 2
 	LSL	R1, #3		// Remainder *= 8
 	LDR	R2, =TEMP	// R2 -> TEMP
 	STR	R1, [R2, #0]	// TEMP[0] = A_STACK offset
@@ -389,7 +434,7 @@ a_press:
 	LDR	R1, [R0, #0]	// R1 = TEMP[0]
 	LSR	R1, #3		// R1 /= 8
 	CMP	R1, #_A		// R1 ? _A
-	BEQ	game		// ((Big loop))
+	BEQ	bottom_game	// ((Big loop))
 	
 a_held:
 	BL	inc_counter	// Parameters: (None)
@@ -408,7 +453,7 @@ b_press:
 	LDR	R1, [R0, #0]	// R1 = TEMP[0]
 	LSR	R1, #3		// R1 /= 8
 	CMP	R1, #_B		// R1 ? _B
-	BEQ	game		// ((Big loop))
+	BEQ	bottom_game	// ((Big loop))
 
 b_held:
 	BL	inc_counter	// Parameters: (None)
@@ -447,7 +492,7 @@ up_press:
 	LDR	R1, [R0, #0]	// R1 = TEMP[0]
 	LSR	R1, #3		// R1 /= 8
 	CMP	R1, #_UP	// R1 ? _UP
-	BEQ	game		// ((Big loop))
+	BEQ	bottom_game	// ((Big loop))
 	
 up_held:
 	BL	inc_counter	// Parameters: (None)
@@ -466,7 +511,7 @@ down_press:
 	LDR	R1, [R0, #0]	// R1 = TEMP[0]
 	LSR	R1, #3		// R1 /= 8
 	CMP	R1, #_DOWN	// R1 ? _DOWN
-	BEQ	game		// ((Big loop))
+	BEQ	bottom_game	// ((Big loop))
 
 down_held:
 	BL	inc_counter	// Parameters: (None)
@@ -485,7 +530,7 @@ left_press:
 	LDR	R1, [R0, #0]	// R1 = TEMP[0]
 	LSR	R1, #3		// R1 /= 8
 	CMP	R1, #_LEFT	// R1 ? _LEFT
-	BEQ	game		// ((Big loop))
+	BEQ	bottom_game	// ((Big loop))
 
 left_held:
 	BL	inc_counter	// Parameters: (None)
@@ -504,7 +549,7 @@ right_press:
 	LDR	R1, [R0, #0]	// R1 = TEMP[0]
 	LSR	R1, #3		// R1 /= 8
 	CMP	R1, #_RIGHT	// R1 ? _RIGHT
-	BEQ	game		// ((Big loop))
+	BEQ	bottom_game
 
 right_held:
 	BL	inc_counter	// Parameters: (None)
@@ -514,6 +559,12 @@ right_held:
 	CMP	R0, #RIGHT	// RIGHT pressed?
 	BGE	right_held	// (Loop)
 	BAL	input		// (Go back)
+
+bottom_game:
+	LDR	R0, =NUM_9_STACK  // R0 -> NUM_9_STACK
+	BL	prep_symbol	// Parameters: R0
+	BL	set_screen	// Parameters: (None)
+	BAL	game		// ((Big loop))
 
 	/* R0 -> (SYMBOL)_STACK */
 prep_symbol:
@@ -686,6 +737,8 @@ LEFT_FILED:
 	.word	0
 RIGHT_FILED:
 	.word	0
+NUM_9_FILED:
+	.word	0
 	
 /* Stack variables: +0 = size, +4 = location */
 
@@ -707,6 +760,9 @@ LEFT_STACK:
 RIGHT_STACK:
 	.word	0
 	.word	0
+NUM_9_STACK:
+	.word	0
+	.word	0
 	
 COUNTER:
 	.word	0
@@ -715,7 +771,7 @@ MILLI_PER_SEC:
 TOTAL_SEC:
 	.word	10
 SCORE:
-	.word	0
+	.word	-1
 	
 FRAMEBUF:
 	.ascii	"/dev/fb0\000"
@@ -731,4 +787,5 @@ LEFT_IMG:
 	.ascii	"/home/pi/Desktop/left.bin\000"
 RIGHT_IMG:
 	.ascii	"/home/pi/Desktop/right.bin\000"
-
+NUM_9_IMG:
+	.ascii	"/home/pi/Desktop/9.bin\000"
