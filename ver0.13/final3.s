@@ -28,7 +28,7 @@ fbp:
 	.equ	_LEFT,	4
 	.equ	_RIGHT,	5
 
-	.equ	STOP,	150
+	.equ	STOP,	155
 	.equ	TIME,	1000
 	.equ	CEASE,	10
 
@@ -41,10 +41,10 @@ put_screen:
 	BNE	put_screen	// While R2 > 0, loop
 	MOV	PC, LR		// (Go back)
 
-	/* R0 -> BLANK, R1, -> BUFFER, R2 = fbp, R3 = screen size */
+	/* R0 -> BLANK64, R1, -> BUFFER, R2 = fbp, R3 = screen size */
 	.global clear_everything
 clear_everything:
-	VLDM	R0!, {Q0-Q3}	// Q0--Q3 = BLANK[0--15]!
+	VLDM	R0, {Q0-Q3}	// Q0--Q3 = BLANK64[0--15]
 	VSTM	R1!, {Q0-Q3}	// BUFFER[0--15]! = Q0--Q3
 	VSTM	R2!, {Q0-Q3}	// fbp[0--15]! = Q0--Q3
 	SUBS	R3, #64		// R3 -= pixels * bit depth ==> set flags
@@ -799,7 +799,7 @@ inc_counter:
 	ADDEQ	R3, #1		// R3 += 1
 	STR	R3, [R2]	// SEC = (incremented)
 	CMP	R3, #CEASE	// R3 ? CEASE
-	BEQ	done		// (Terminate)
+	BEQ	end_game	// (Terminate)
 	POP	{PC}		// Fetch
 
 	/* (No parameters) */
@@ -1006,7 +1006,7 @@ set_screen:
 	/* (No parameters) */
 clear_screen:
 	PUSH	{LR}		// Save
-	LDR	R0, =BLANK	// R0 -> BLANK
+	LDR	R0, =BLANK64	// R0 -> BLANK64
 	LDR	R1, =BUFFER	// R1 -> BUFFER
 	LDR	R2, =fbp	// R2 -> fbp
 	LDR	R2, [R2]	// R2 = mapped fbp
@@ -1076,7 +1076,10 @@ end_divide:
 	MUL	R1, R1, R2	// R1 = d * Quotient
 	SUB	R1, R0, R1	// R1 = Remainder
 	MOV	R0, R2		// R0 = Quotient
-	MOV	PC, LR
+	MOV	PC, LR		// (Go back)
+
+end_game:
+	BL	clear_screen	// Parameters: (None)
 
 	/* (No parameters) */
 done:
@@ -1142,10 +1145,14 @@ done:
 	
 BUFFER:
 	.skip	0x7E9000
-BLANK:
-	.skip	0x7E9000
 
 	.data
+
+BLANK64:
+	.word	0, 0, 0, 0
+	.word	0, 0, 0, 0
+	.word	0, 0, 0, 0
+	.word	0, 0, 0, 0
 	
 JOYSTICK:
 	.word	0
