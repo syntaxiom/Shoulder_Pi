@@ -28,7 +28,9 @@ fbp:
 	.equ	_LEFT,	4
 	.equ	_RIGHT,	5
 
-	.equ	STOP,	125
+	.equ	STOP,	150
+	.equ	TIME,	1000
+	.equ	CEASE,	2
 
 	/* R0 -> BUFFER, R1 = fbp, R2 = screen size (loop counter) */
 	.global put_screen
@@ -113,6 +115,42 @@ num_9_sym_loop:
 
 end_num_9_sym:
 	LDR	R0, =NUM_9_STACK  // R0 -> NUM_9_STACK
+	STR	R4, [R0, #0]	// size = R4
+	STR	SP, [R0, #4]	// location = SP
+
+	// Get 8 symbol
+
+prep_num_8_sym:
+	LDR	R0, =NUM_8_IMG	// R0 -> NUM_8_IMG
+	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
+	BL	open		// Parameters: R0--R1 (R0 = open(...))
+	LDR	R1, =NUM_8_FILED // R1 -> NUM_8_FILED
+	STR	R0, [R1]	// NUM_8_FILED = R0
+	MOV	R4, #0		// R4 = 0 (Later: size)
+
+num_8_sym_loop:
+	LDR	R0, =NUM_8_FILED  // R0 -> NUM_8_FILED
+	LDR	R0, [R0]	// R0 = NUM_8_FILED
+	LDR	R1, =POSCOLOR	// R1 -> POSCOLOR
+	MOV	R2, #12		// R2 = 12 (bytes to read)
+	BL	read		// Parameters: R0--R2
+	CMP	R0, #0		// R0 ? 0
+	BEQ	end_num_8_sym	// (Break)
+	LDR	R0, =POSCOLOR	// R0 -> POSCOLOR
+	LDR	R1, [R0, #0]	// R1 = x
+	LDR	R2, [R0, #4]	// R2 = y
+	LDR	R3, [R0, #8]	// R3 = color
+	LDR	R0, =LINELENGTH	// R0 -> LINELENGTH
+	LDR	R0, [R0]	// R0 = LINELENGTH
+	MUL	R2, R2, R0	// R2 = y * LINELENGTH
+	LSL	R1, R1, #2	// R1 = x * 4
+	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
+	PUSH	{R1, R3}	// Push {offset, color}
+	ADD	R4, #8		// R4 += 8
+	BAL	num_8_sym_loop	// (Loop)
+
+end_num_8_sym:
+	LDR	R0, =NUM_8_STACK  // R0 -> NUM_9_STACK
 	STR	R4, [R0, #0]	// size = R4
 	STR	SP, [R0, #4]	// location = SP
 
@@ -423,7 +461,16 @@ inc_counter:
 	LDR	R0, =COUNTER	// R0 -> COUNTER
 	LDR	R1, [R0]	// R1 = COUNTER
 	ADD	R1, #1		// R1 += 1
+	CMP	R1, #TIME	// R1 ? TIME
+	MOVGE	R1, #0		// R1 = 0
 	STR	R1, [R0]	// COUNTER = (incremented)
+	CMP	R1, #0		// R1 ? 0
+	LDR	R2, =SEC	// R2 -> SEC
+	LDR	R3, [R2]	// R3 = SEC
+	ADDEQ	R3, #1		// R3 += 1
+	STR	R3, [R2]	// SEC = (incremented)
+	CMP	R3, #CEASE	// R3 ? CEASE
+	BEQ	done		// (Terminate)
 	POP	{PC}		// Fetch
 
 	/* (No parameters) */
@@ -560,6 +607,7 @@ right_held:
 	BGE	right_held	// (Loop)
 	BAL	input		// (Go back)
 
+	/* (Get ready for big loop) */
 bottom_game:
 	LDR	R0, =NUM_9_STACK  // R0 -> NUM_9_STACK
 	BL	prep_symbol	// Parameters: R0
@@ -739,6 +787,8 @@ RIGHT_FILED:
 	.word	0
 NUM_9_FILED:
 	.word	0
+NUM_8_FILED:
+	.word	0
 	
 /* Stack variables: +0 = size, +4 = location */
 
@@ -763,13 +813,14 @@ RIGHT_STACK:
 NUM_9_STACK:
 	.word	0
 	.word	0
+NUM_8_STACK:
+	.word	0
+	.word	0
 	
 COUNTER:
 	.word	0
-MILLI_PER_SEC:
-	.word	1000
-TOTAL_SEC:
-	.word	10
+SEC:
+	.word	0
 SCORE:
 	.word	-1
 	
@@ -789,3 +840,5 @@ RIGHT_IMG:
 	.ascii	"/home/pi/Desktop/right.bin\000"
 NUM_9_IMG:
 	.ascii	"/home/pi/Desktop/9.bin\000"
+NUM_8_IMG:
+	.ascii	"/home/pi/Desktop/8.bin\000"
