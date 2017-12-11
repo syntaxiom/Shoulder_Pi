@@ -30,7 +30,7 @@ fbp:
 
 	.equ	STOP,	150
 	.equ	TIME,	1000
-	.equ	CEASE,	6
+	.equ	CEASE,	10
 
 	/* R0 -> BUFFER, R1 = fbp, R2 = screen size (loop counter) */
 	.global put_screen
@@ -295,6 +295,150 @@ num_4_sym_loop:
 
 end_num_4_sym:
 	LDR	R0, =NUM_4_STACK  // R0 -> NUM_4_STACK
+	STR	R4, [R0, #0]	// size = R4
+	STR	SP, [R0, #4]	// location = SP
+
+	// Get 3 symbol
+
+prep_num_3_sym:
+	LDR	R0, =NUM_3_IMG	// R0 -> NUM_3_IMG
+	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
+	BL	open		// Parameters: R0--R1 (R0 = open(...))
+	LDR	R1, =NUM_3_FILED // R1 -> NUM_3_FILED
+	STR	R0, [R1]	// NUM_3_FILED = R0
+	MOV	R4, #0		// R4 = 0 (Later: size)
+
+num_3_sym_loop:
+	LDR	R0, =NUM_3_FILED  // R0 -> NUM_3_FILED
+	LDR	R0, [R0]	// R0 = NUM_3_FILED
+	LDR	R1, =POSCOLOR	// R1 -> POSCOLOR
+	MOV	R2, #12		// R2 = 12 (bytes to read)
+	BL	read		// Parameters: R0--R2
+	CMP	R0, #0		// R0 ? 0
+	BEQ	end_num_3_sym	// (Break)
+	LDR	R0, =POSCOLOR	// R0 -> POSCOLOR
+	LDR	R1, [R0, #0]	// R1 = x
+	LDR	R2, [R0, #4]	// R2 = y
+	LDR	R3, [R0, #8]	// R3 = color
+	LDR	R0, =LINELENGTH	// R0 -> LINELENGTH
+	LDR	R0, [R0]	// R0 = LINELENGTH
+	MUL	R2, R2, R0	// R2 = y * LINELENGTH
+	LSL	R1, R1, #2	// R1 = x * 4
+	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
+	PUSH	{R1, R3}	// Push {offset, color}
+	ADD	R4, #8		// R4 += 8
+	BAL	num_3_sym_loop	// (Loop)
+
+end_num_3_sym:
+	LDR	R0, =NUM_3_STACK  // R0 -> NUM_3_STACK
+	STR	R4, [R0, #0]	// size = R4
+	STR	SP, [R0, #4]	// location = SP
+
+	// Get 2 symbol
+
+prep_num_2_sym:
+	LDR	R0, =NUM_2_IMG	// R0 -> NUM_2_IMG
+	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
+	BL	open		// Parameters: R0--R1 (R0 = open(...))
+	LDR	R1, =NUM_2_FILED // R1 -> NUM_2_FILED
+	STR	R0, [R1]	// NUM_2_FILED = R0
+	MOV	R4, #0		// R4 = 0 (Later: size)
+
+num_2_sym_loop:
+	LDR	R0, =NUM_2_FILED  // R0 -> NUM_2_FILED
+	LDR	R0, [R0]	// R0 = NUM_2_FILED
+	LDR	R1, =POSCOLOR	// R1 -> POSCOLOR
+	MOV	R2, #12		// R2 = 12 (bytes to read)
+	BL	read		// Parameters: R0--R2
+	CMP	R0, #0		// R0 ? 0
+	BEQ	end_num_2_sym	// (Break)
+	LDR	R0, =POSCOLOR	// R0 -> POSCOLOR
+	LDR	R1, [R0, #0]	// R1 = x
+	LDR	R2, [R0, #4]	// R2 = y
+	LDR	R3, [R0, #8]	// R3 = color
+	LDR	R0, =LINELENGTH	// R0 -> LINELENGTH
+	LDR	R0, [R0]	// R0 = LINELENGTH
+	MUL	R2, R2, R0	// R2 = y * LINELENGTH
+	LSL	R1, R1, #2	// R1 = x * 4
+	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
+	PUSH	{R1, R3}	// Push {offset, color}
+	ADD	R4, #8		// R4 += 8
+	BAL	num_2_sym_loop	// (Loop)
+
+end_num_2_sym:
+	LDR	R0, =NUM_2_STACK  // R0 -> NUM_2_STACK
+	STR	R4, [R0, #0]	// size = R4
+	STR	SP, [R0, #4]	// location = SP
+
+	// Get 1 symbol
+
+prep_num_1_sym:
+	LDR	R0, =NUM_1_IMG	// R0 -> NUM_1_IMG
+	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
+	BL	open		// Parameters: R0--R1 (R0 = open(...))
+	LDR	R1, =NUM_1_FILED // R1 -> NUM_1_FILED
+	STR	R0, [R1]	// NUM_1_FILED = R0
+	MOV	R4, #0		// R4 = 0 (Later: size)
+
+num_1_sym_loop:
+	LDR	R0, =NUM_1_FILED  // R0 -> NUM_1_FILED
+	LDR	R0, [R0]	// R0 = NUM_1_FILED
+	LDR	R1, =POSCOLOR	// R1 -> POSCOLOR
+	MOV	R2, #12		// R2 = 12 (bytes to read)
+	BL	read		// Parameters: R0--R2
+	CMP	R0, #0		// R0 ? 0
+	BEQ	end_num_1_sym	// (Break)
+	LDR	R0, =POSCOLOR	// R0 -> POSCOLOR
+	LDR	R1, [R0, #0]	// R1 = x
+	LDR	R2, [R0, #4]	// R2 = y
+	LDR	R3, [R0, #8]	// R3 = color
+	LDR	R0, =LINELENGTH	// R0 -> LINELENGTH
+	LDR	R0, [R0]	// R0 = LINELENGTH
+	MUL	R2, R2, R0	// R2 = y * LINELENGTH
+	LSL	R1, R1, #2	// R1 = x * 4
+	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
+	PUSH	{R1, R3}	// Push {offset, color}
+	ADD	R4, #8		// R4 += 8
+	BAL	num_1_sym_loop	// (Loop)
+
+end_num_1_sym:
+	LDR	R0, =NUM_1_STACK  // R0 -> NUM_1_STACK
+	STR	R4, [R0, #0]	// size = R4
+	STR	SP, [R0, #4]	// location = SP
+
+	// Get 0 symbol
+
+prep_num_0_sym:
+	LDR	R0, =NUM_0_IMG	// R0 -> NUM_0_IMG
+	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
+	BL	open		// Parameters: R0--R1 (R0 = open(...))
+	LDR	R1, =NUM_0_FILED // R1 -> NUM_0_FILED
+	STR	R0, [R1]	// NUM_0_FILED = R0
+	MOV	R4, #0		// R4 = 0 (Later: size)
+
+num_0_sym_loop:
+	LDR	R0, =NUM_0_FILED  // R0 -> NUM_0_FILED
+	LDR	R0, [R0]	// R0 = NUM_0_FILED
+	LDR	R1, =POSCOLOR	// R1 -> POSCOLOR
+	MOV	R2, #12		// R2 = 12 (bytes to read)
+	BL	read		// Parameters: R0--R2
+	CMP	R0, #0		// R0 ? 0
+	BEQ	end_num_0_sym	// (Break)
+	LDR	R0, =POSCOLOR	// R0 -> POSCOLOR
+	LDR	R1, [R0, #0]	// R1 = x
+	LDR	R2, [R0, #4]	// R2 = y
+	LDR	R3, [R0, #8]	// R3 = color
+	LDR	R0, =LINELENGTH	// R0 -> LINELENGTH
+	LDR	R0, [R0]	// R0 = LINELENGTH
+	MUL	R2, R2, R0	// R2 = y * LINELENGTH
+	LSL	R1, R1, #2	// R1 = x * 4
+	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
+	PUSH	{R1, R3}	// Push {offset, color}
+	ADD	R4, #8		// R4 += 8
+	BAL	num_0_sym_loop	// (Loop)
+
+end_num_0_sym:
+	LDR	R0, =NUM_0_STACK  // R0 -> NUM_0_STACK
 	STR	R4, [R0, #0]	// size = R4
 	STR	SP, [R0, #4]	// location = SP
 
