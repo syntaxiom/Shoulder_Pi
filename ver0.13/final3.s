@@ -664,6 +664,34 @@ after_loading_sym:
 	MOV	FP, SP		// Set link
 	BL	set_screen	// Parameters: None
 
+setup_countdown:	
+	LDR	R0, =X_RES	// R0 -> XRES
+	LDR	R1, =Y_RES	// R1 -> YRES
+	LDR	R0, [R0]	// R0 = XRES
+	LSR	R0, #1		// R0 = XRES / 2
+	ADD	R0, #32		// R0 += 32
+	LDR	R1, [R1]	// R1 = YRES
+	LSR	R1, #1		// R1 = YRES / 2
+	SUB	R1, #32		// R1 -= 32
+	BL	set_offset	// Parameters: R0--R1
+
+countdown:
+	LDR	R0, =NUM_3_STACK  // R0 -> NUM_3_STACK
+	BL	prep_symbol	// Parameters: R0
+	BL	set_screen	// Parameters: (None)
+	LDR	R0, =1000	// R0 = 1000
+	BL	delay		// Parameters: R0
+	LDR	R0, =NUM_2_STACK  // R0 -> NUM_2_STACK
+	BL	prep_symbol	// Parameters: R0
+	BL	set_screen	// Parameters: (None)
+	LDR	R0, =1000	// R0 = 1000
+	BL	delay		// Parameters: R0
+	LDR	R0, =NUM_1_STACK  // R0 -> NUM_1_STACK
+	BL	prep_symbol	// Parameters: R0
+	BL	set_screen	// Parameters: (None)
+	LDR	R0, =1000	// R0 = 1000
+	BL	delay		// Parameters: R0
+
 	// Game
 
 game:
@@ -940,6 +968,17 @@ set_screen:
 	BL	put_screen	// Parameters: R0--R2
 	POP	{PC}		// Fetch
 
+	/* (No parameters) */
+clear_screen:
+	PUSH	{LR}		// Save
+	LDR	R0, =BLANK	// R0 -> BLANK
+	LDR	R1, =fbp	// R1 -> fbp
+	LDR	R1, [R1]	// R1 = mapped fbp
+	LDR	R2, =SCREENSIZE	// R2 -> SCREENSIZE
+	LDR	R2, [R2]	// R2 = SCREENSIZE
+	BL	put_screen	// Parameters: R0--R2
+	POP	{PC}		// Fetch
+
 	/* R0 = x, R1 = y */
 set_offset:
 	PUSH	{LR}		// Save
@@ -1066,6 +1105,8 @@ done:
 	.bss
 	
 BUFFER:
+	.skip	0x7E9000
+BLANK:
 	.skip	0x7E9000
 
 	.data
