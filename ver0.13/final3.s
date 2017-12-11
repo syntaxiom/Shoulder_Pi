@@ -713,10 +713,6 @@ game:
 	STR	R1, [R0]	// SCORE = (incremented)
 	MOV	R0, #STOP	// R0 = milliseconds
 	BL	delay		// Parameters: R0
-	LDR	R0, =COUNTER	// R0 -> COUNTER
-	LDR	R1, [R0]	// R1 = COUNTER
-	ADD	R1, #STOP	// R1 += STOP
-	STR	R1, [R0]	// COUNTER = (incremented)
 	BL	inc_counter	// Parameters: (None)
 
 new_symbol:
@@ -1080,6 +1076,30 @@ end_divide:
 
 end_game:
 	BL	clear_screen	// Parameters: (None)
+	MOV	R0, #0		// R0 = x
+	LDR	R1, =Y_RES	// R1 -> Y_RES
+	LDR	R1, [R1]	// R1 = Y_RES
+	SUB	R1, #64		// R1 -= 64 (height of sprite)
+	BL	set_offset	// Parameters: R0--R1
+
+score_loop:	
+	LDR	R1, =SCORE	// R0 -> SCORE
+	LDR	R0, [R1]	// R0 = SCORE
+	CMP	R0, #0		// R0 ? 0
+	BEQ	done		// (Terminate)
+	MOV	R1, #10		// R1 = 10
+	BL	divide		// Parameters: R0--R1
+	LDR	R2, =SCORE	// R2 -> SCORE
+	STR	R0, [R2]	// SCORE = R0
+	LDR	R2, =NUM_0_STACK  // R2 -> NUM_0_STACK
+	LSL	R1, #3		// Remainder *= 8
+	SUB	R0, R2, R1	// R0 = (SYMBOL)_STACK
+	BL	prep_symbol	// Parameters: R0
+	BL	set_screen	// Parameters: (None)
+	LDR	R0, =0		// R0 = dx
+	LDR	R1, =-64	// R1 = dy
+	BL	adj_offset	// Parameters: R0--R1
+	BAL	score_loop	// (Loop)
 
 	/* (No parameters) */
 done:
