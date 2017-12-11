@@ -302,10 +302,15 @@ after_loading_sym:
 
 	// Game
 
-new_symbol:	
+game:
+	MOV	R0, #10		// R0 = milliseconds
+	BL	delay		// Parameters: R0
+
+new_symbol:
 	BL	clock		// Parameters: (None)
-	LDR	R1, =6		// R1 = 6
+	LDR	R1, =4		// R1 = 4
 	BL	divide		// Parameters: R0--R1
+	ADD	R1, #2		// Remainder += 2
 	LSL	R1, #3		// Remainder *= 8
 	LDR	R2, =TEMP	// R2 -> TEMP
 	STR	R1, [R2, #0]	// TEMP[0] = A_STACK offset
@@ -378,11 +383,13 @@ inc_counter:
 
 	/* (No parameters) */
 a_press:
+	BL	inc_counter	// Parameters: (None)
+	BL	set_screen	// Parameters: (None)
 	LDR	R0, =TEMP	// R0 -> TEMP
 	LDR	R1, [R0, #0]	// R1 = TEMP[0]
 	LSR	R1, #3		// R1 /= 8
 	CMP	R1, #_A		// R1 ? _A
-	BEQ	new_symbol	// ((Big loop))
+	BEQ	game	// ((Big loop))
 	
 a_held:
 	BL	inc_counter	// Parameters: (None)
@@ -395,11 +402,13 @@ a_held:
 
 	/* (No parameters) */
 b_press:
+	BL	inc_counter	// Parameters: (None)
+	BL	set_screen	// Parameters: (None)
 	LDR	R0, =TEMP	// R0 -> TEMP
 	LDR	R1, [R0, #0]	// R1 = TEMP[0]
 	LSR	R1, #3		// R1 /= 8
 	CMP	R1, #_B		// R1 ? _B
-	BEQ	new_symbol	// ((Big loop))
+	BEQ	game	// ((Big loop))
 
 b_held:
 	BL	inc_counter	// Parameters: (None)
@@ -432,11 +441,13 @@ start_held:
 
 	/* (No parameters) */
 up_press:
+	BL	inc_counter	// Parameters: (None)
+	BL	set_screen	// Parameters: (None)
 	LDR	R0, =TEMP	// R0 -> TEMP
 	LDR	R1, [R0, #0]	// R1 = TEMP[0]
 	LSR	R1, #3		// R1 /= 8
 	CMP	R1, #_UP	// R1 ? _UP
-	BEQ	new_symbol	// ((Big loop))
+	BEQ	game	// ((Big loop))
 	
 up_held:
 	BL	inc_counter	// Parameters: (None)
@@ -449,11 +460,13 @@ up_held:
 
 	/* (No parameters) */
 down_press:
+	BL	inc_counter	// Parameters: (None)
+	BL	set_screen	// Parameters: (None)
 	LDR	R0, =TEMP	// R0 -> TEMP
 	LDR	R1, [R0, #0]	// R1 = TEMP[0]
 	LSR	R1, #3		// R1 /= 8
 	CMP	R1, #_DOWN	// R1 ? _DOWN
-	BEQ	new_symbol	// ((Big loop))
+	BEQ	game	// ((Big loop))
 
 down_held:
 	BL	inc_counter	// Parameters: (None)
@@ -466,11 +479,13 @@ down_held:
 	
 	/* (No parameters) */
 left_press:
+	BL	inc_counter	// Parameters: (None)
+	BL	set_screen	// Parameters: (None)
 	LDR	R0, =TEMP	// R0 -> TEMP
 	LDR	R1, [R0, #0]	// R1 = TEMP[0]
 	LSR	R1, #3		// R1 /= 8
 	CMP	R1, #_LEFT	// R1 ? _LEFT
-	BEQ	new_symbol	// ((Big loop))
+	BEQ	game	// ((Big loop))
 
 left_held:
 	BL	inc_counter	// Parameters: (None)
@@ -483,11 +498,13 @@ left_held:
 
 	/* (No parameters) */
 right_press:
+	BL	inc_counter	// Parameters: (None)
+	BL	set_screen	// Parameters: (None)
 	LDR	R0, =TEMP	// R0 -> TEMP
 	LDR	R1, [R0, #0]	// R1 = TEMP[0]
 	LSR	R1, #3		// R1 /= 8
 	CMP	R1, #_RIGHT	// R1 ? _RIGHT
-	BEQ	new_symbol	// ((Big loop))
+	BEQ	game	// ((Big loop))
 
 right_held:
 	BL	inc_counter	// Parameters: (None)
