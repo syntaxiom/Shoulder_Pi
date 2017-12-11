@@ -292,7 +292,14 @@ after_loading_sym:
 	// Debugging
 
 debug:
-	NOP
+	LDR	R0, =89		// R0 = n
+	LDR	R1, =6		// R1 = d
+	BL	divide		// Parameters: R0--R1
+	LSL	R1, #3		// Remainder *= 8
+	LDR	R0, =A_STACK	// R0 -> A_STACK
+	ADD	R0, R1		// R0 -> (SOMETHING)_STACK
+	BL	prep_symbol	// Parameters: R0
+	BL	set_screen	// Parameters: (None)
 	
 	// Input loop
 
@@ -513,6 +520,33 @@ adj_offset:
 	STR	R2, [R1]	// OFFSET = offset
 	POP	{PC}		// Fetch
 
+	/* R0 = n, R1 = d */
+divide:
+	PUSH	{R0-R1}		// Save
+	MOV	R2, #0		// R2 = 0 (Quotient)
+	MOV	R3, #1		// R3 = 1 (Accumulator)
+
+div_loop_1:
+	CMP	R1, R0		// n ? d
+	MOVLS	R1, R1, LSL #1	// d *= 2
+	MOVLS	R3, R3, LSL #1	// R3 *= 2
+	BLS	div_loop_1	// (Loop)
+
+div_loop_2:
+	CMP	R0, R1		// d ? n
+	SUBCS	R0, R0, R1	// n -= d
+	ADDCS	R2, R2, R3	// R2 += R3
+	MOVS	R3, R3, LSR #1	// R3 /= 2
+	MOVCC	R1, R1, LSR #1	// d /= 2
+	BCC	div_loop_2	// (Loop)
+
+end_divide:
+	POP	{R0-R1}		// Fetch
+	MUL	R1, R1, R2	// R1 = d * Quotient
+	SUB	R1, R0, R1	// R1 = Remainder
+	MOV	R0, R2		// R0 = Quotient
+	MOV	PC, LR
+
 	/* (No parameters) */
 done:
 	LDR	R0, =fbp	// R0 -> fbp
@@ -543,11 +577,21 @@ done:
 	MOV	R0, #0		// R0 = 0 (return code)
 	BLAL	exit		// Terminate the program
 
+BTN_STACK:
+	.word	A_STACK
+	.word	B_STACK
+	.word	UP_STACK
+	.word	DOWN_STACK
+	.word	LEFT_STACK
+	.word	RIGHT_STACK
+
 	.bss
+	
 BUFFER:
 	.skip	0x7E9000
 
 	.data
+	
 JOYSTICK:
 	.word	0
 	
@@ -566,6 +610,10 @@ STACKSIZE:
 OFFSET:
 	.word	0
 
+A_FILED:
+	.word	0
+B_FILED:
+	.word	0
 UP_FILED:
 	.word	0
 DOWN_FILED:
@@ -574,13 +622,15 @@ LEFT_FILED:
 	.word	0
 RIGHT_FILED:
 	.word	0
-B_FILED:
-	.word	0
-A_FILED:
-	.word	0
-
-/* Stack variables: +0 = size, +4 = location */
 	
+/* Stack variables: +0 = size, +4 = location */
+
+A_STACK:
+	.word	0
+	.word	0
+B_STACK:
+	.word	0
+	.word	0
 UP_STACK:
 	.word	0
 	.word	0
@@ -593,15 +643,18 @@ LEFT_STACK:
 RIGHT_STACK:
 	.word	0
 	.word	0
-B_STACK:
-	.word	0
-	.word	0
-A_STACK:
-	.word	0
+
+INPUTS:
+	.word	A, B, UP, DOWN, LEFT, RIGHT
+LEVEL:
 	.word	0
 	
 FRAMEBUF:
 	.ascii	"/dev/fb0\000"
+A_IMG:
+	.ascii	"/home/pi/Desktop/a.bin\000"
+B_IMG:
+	.ascii	"/home/pi/Desktop/b.bin\000"
 UP_IMG:
 	.ascii	"/home/pi/Desktop/up.bin\000"
 DOWN_IMG:
@@ -610,7 +663,4 @@ LEFT_IMG:
 	.ascii	"/home/pi/Desktop/left.bin\000"
 RIGHT_IMG:
 	.ascii	"/home/pi/Desktop/right.bin\000"
-B_IMG:
-	.ascii	"/home/pi/Desktop/b.bin\000"
-A_IMG:
-	.ascii	"/home/pi/Desktop/a.bin\000"
+
