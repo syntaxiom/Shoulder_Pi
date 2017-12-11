@@ -67,6 +67,78 @@ main:
 	LDR	R1, =fbp	// R1 -> fbp
 	STR	R0, [R1]	// fbp = mmap(...)
 
+	// Get A symbol
+
+prep_a_sym:
+	LDR	R0, =A_IMG	// R0 -> A_IMG
+	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
+	BL	open		// Parameters: R0--R1 (R0 = open(...))
+	LDR	R1, =A_FILED	// R1 -> A_FILED
+	STR	R0, [R1]	// A_FILED = R0
+	MOV	R4, #0		// R4 = 0 (Later: size)
+
+a_sym_loop:
+	LDR	R0, =A_FILED	// R0 -> A_FILED
+	LDR	R0, [R0]	// R0 = A_FILED
+	LDR	R1, =POSCOLOR	// R1 -> POSCOLOR
+	MOV	R2, #12		// R2 = 12 (bytes to read)
+	BL	read		// Parameters: R0--R2
+	CMP	R0, #0		// R0 ? 0
+	BEQ	end_a_sym	// (Break)
+	LDR	R0, =POSCOLOR	// R0 -> POSCOLOR
+	LDR	R1, [R0, #0]	// R1 = x
+	LDR	R2, [R0, #4]	// R2 = y
+	LDR	R3, [R0, #8]	// R3 = color
+	LDR	R0, =LINELENGTH	// R0 -> LINELENGTH
+	LDR	R0, [R0]	// R0 = LINELENGTH
+	MUL	R2, R2, R0	// R2 = y * LINELENGTH
+	LSL	R1, R1, #2	// R1 = x * 4
+	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
+	PUSH	{R1, R3}	// Push {offset, color}
+	ADD	R4, #8		// R4 += 8
+	BAL	a_sym_loop	// (Loop)
+
+end_a_sym:
+	LDR	R0, =A_STACK	// R0 -> A_STACK
+	STR	R4, [R0, #0]	// size = R4
+	STR	SP, [R0, #4]	// location = SP
+
+	// Get B symbol
+
+prep_b_sym:
+	LDR	R0, =B_IMG	// R0 -> B_IMG
+	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
+	BL	open		// Parameters: R0--R1 (R0 = open(...))
+	LDR	R1, =B_FILED	// R1 -> B_FILED
+	STR	R0, [R1]	// LEFT_FILED = R0
+	MOV	R4, #0		// R4 = 0 (Later: size)
+
+b_sym_loop:
+	LDR	R0, =B_FILED	// R0 -> B_FILED
+	LDR	R0, [R0]	// R0 = B_FILED
+	LDR	R1, =POSCOLOR	// R1 -> POSCOLOR
+	MOV	R2, #12		// R2 = 12 (bytes to read)
+	BL	read		// Parameters: R0--R2
+	CMP	R0, #0		// R0 ? 0
+	BEQ	end_b_sym	// (Break)
+	LDR	R0, =POSCOLOR	// R0 -> POSCOLOR
+	LDR	R1, [R0, #0]	// R1 = x
+	LDR	R2, [R0, #4]	// R2 = y
+	LDR	R3, [R0, #8]	// R3 = color
+	LDR	R0, =LINELENGTH	// R0 -> LINELENGTH
+	LDR	R0, [R0]	// R0 = LINELENGTH
+	MUL	R2, R2, R0	// R2 = y * LINELENGTH
+	LSL	R1, R1, #2	// R1 = x * 4
+	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
+	PUSH	{R1, R3}	// Push {offset, color}
+	ADD	R4, #8		// R4 += 8
+	BAL	b_sym_loop	// (Loop)
+
+end_b_sym:
+	LDR	R0, =B_STACK	// R0 -> B_STACK
+	STR	R4, [R0, #0]	// size = R4
+	STR	SP, [R0, #4]	// location = SP
+
 	//Get up symbol
 	
 prep_up_sym:
@@ -211,78 +283,6 @@ end_right_sym:
 	STR	R4, [R0, #0]	// size = R4
 	STR	SP, [R0, #4]	// location = SP
 
-	// Get B symbol
-
-prep_b_sym:
-	LDR	R0, =B_IMG	// R0 -> B_IMG
-	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
-	BL	open		// Parameters: R0--R1 (R0 = open(...))
-	LDR	R1, =B_FILED	// R1 -> B_FILED
-	STR	R0, [R1]	// LEFT_FILED = R0
-	MOV	R4, #0		// R4 = 0 (Later: size)
-
-b_sym_loop:
-	LDR	R0, =B_FILED	// R0 -> B_FILED
-	LDR	R0, [R0]	// R0 = B_FILED
-	LDR	R1, =POSCOLOR	// R1 -> POSCOLOR
-	MOV	R2, #12		// R2 = 12 (bytes to read)
-	BL	read		// Parameters: R0--R2
-	CMP	R0, #0		// R0 ? 0
-	BEQ	end_b_sym	// (Break)
-	LDR	R0, =POSCOLOR	// R0 -> POSCOLOR
-	LDR	R1, [R0, #0]	// R1 = x
-	LDR	R2, [R0, #4]	// R2 = y
-	LDR	R3, [R0, #8]	// R3 = color
-	LDR	R0, =LINELENGTH	// R0 -> LINELENGTH
-	LDR	R0, [R0]	// R0 = LINELENGTH
-	MUL	R2, R2, R0	// R2 = y * LINELENGTH
-	LSL	R1, R1, #2	// R1 = x * 4
-	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
-	PUSH	{R1, R3}	// Push {offset, color}
-	ADD	R4, #8		// R4 += 8
-	BAL	b_sym_loop	// (Loop)
-
-end_b_sym:
-	LDR	R0, =B_STACK	// R0 -> B_STACK
-	STR	R4, [R0, #0]	// size = R4
-	STR	SP, [R0, #4]	// location = SP
-
-	// Get A symbol
-
-prep_a_sym:
-	LDR	R0, =A_IMG	// R0 -> A_IMG
-	MOV	R1, #2		// R1 = 2 (Opcode for O_RDWR)
-	BL	open		// Parameters: R0--R1 (R0 = open(...))
-	LDR	R1, =A_FILED	// R1 -> A_FILED
-	STR	R0, [R1]	// A_FILED = R0
-	MOV	R4, #0		// R4 = 0 (Later: size)
-
-a_sym_loop:
-	LDR	R0, =A_FILED	// R0 -> A_FILED
-	LDR	R0, [R0]	// R0 = A_FILED
-	LDR	R1, =POSCOLOR	// R1 -> POSCOLOR
-	MOV	R2, #12		// R2 = 12 (bytes to read)
-	BL	read		// Parameters: R0--R2
-	CMP	R0, #0		// R0 ? 0
-	BEQ	end_a_sym	// (Break)
-	LDR	R0, =POSCOLOR	// R0 -> POSCOLOR
-	LDR	R1, [R0, #0]	// R1 = x
-	LDR	R2, [R0, #4]	// R2 = y
-	LDR	R3, [R0, #8]	// R3 = color
-	LDR	R0, =LINELENGTH	// R0 -> LINELENGTH
-	LDR	R0, [R0]	// R0 = LINELENGTH
-	MUL	R2, R2, R0	// R2 = y * LINELENGTH
-	LSL	R1, R1, #2	// R1 = x * 4
-	ADD	R1, R1, R2	// R1 = (x * 4) + (y * LINELENGTH) (offset)
-	PUSH	{R1, R3}	// Push {offset, color}
-	ADD	R4, #8		// R4 += 8
-	BAL	a_sym_loop	// (Loop)
-
-end_a_sym:
-	LDR	R0, =A_STACK	// R0 -> A_STACK
-	STR	R4, [R0, #0]	// size = R4
-	STR	SP, [R0, #4]	// location = SP
-
 	// After all the symbols are loaded
 
 after_loading_sym:
@@ -292,7 +292,7 @@ after_loading_sym:
 	// Debugging
 
 debug:
-	LDR	R0, =89		// R0 = n
+	BL	clock		// Parameters: (None); R0 = n
 	LDR	R1, =6		// R1 = d
 	BL	divide		// Parameters: R0--R1
 	LSL	R1, #3		// Remainder *= 8
@@ -577,14 +577,6 @@ done:
 	MOV	R0, #0		// R0 = 0 (return code)
 	BLAL	exit		// Terminate the program
 
-BTN_STACK:
-	.word	A_STACK
-	.word	B_STACK
-	.word	UP_STACK
-	.word	DOWN_STACK
-	.word	LEFT_STACK
-	.word	RIGHT_STACK
-
 	.bss
 	
 BUFFER:
@@ -599,14 +591,11 @@ FB_FILED:
 	.word	0
 POSCOLOR:
 	.skip	12
-SIZE:
-	.skip	4
 SCREENSIZE:
 	.word	0
 LINELENGTH:
 	.word	0
-STACKSIZE:
-	.word	0
+	
 OFFSET:
 	.word	0
 
@@ -644,8 +633,6 @@ RIGHT_STACK:
 	.word	0
 	.word	0
 
-INPUTS:
-	.word	A, B, UP, DOWN, LEFT, RIGHT
 LEVEL:
 	.word	0
 	
